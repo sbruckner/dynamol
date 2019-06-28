@@ -15,6 +15,7 @@ DynaMol was developed under Windows using Microsoft Visual Studio 2017. It uses 
 
 The easiest way to get started is to use our release package which, in addition to the source code, contains all prebuilt dependencies and binaries for Windows and Visual Studio 2017 (64-Bit). It is available here:
 
+https://github.com/sbruckner/dynamol/releases
 
 ## Prerequisites
 
