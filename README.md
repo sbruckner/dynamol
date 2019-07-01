@@ -1,4 +1,4 @@
-# DynaMol -- Dynamic Visibility-Driven Molecular Surfaces
+# DynaMol - Dynamic Visibility-Driven Molecular Surfaces
 
 DynaMol is a fast and easy method for rendering dynamic Gaussian molecular surfaces. It provides high quality and performance, and does not require any preprocessing such as surface extraction.
 

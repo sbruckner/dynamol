@@ -1,1 +1,1 @@
-.\bin\Release\dynamol
+.\bin\Debug\dynamol
