@@ -89,10 +89,6 @@ As mentioned above, the program requires that the current working directory is s
 
 After starting the program, a file dialog will pop up and ask you for a Protein Data Bank (PDB) file (see https://www.rcsb.org/). An example file called is located in the ```./dat``` folder. Some basic usage instructions are displayed in the console window.
 
-## Author
-
-DynaMol was developed by Stefan Bruckner. Please see https://vis.uib.no/team/bruckner for contact information.
-
 ## Acknowledgments
 
 The project uses a number of great shaders developed by Michael Mara, Morgan  McGuire, and colleagues. We'd like to thank them for making their outstanding work available. 
@@ -111,3 +107,8 @@ The project uses a number of great shaders developed by Michael Mara, Morgan  Mc
 
   Morgan McGuire. The Skylanders SWAP Force Depth-of-Field Shader.
   http://casual-effects.blogspot.com/2013/09/the-skylanders-swap-force-depth-of.html 
+
+## License
+
+Copyright (c) 2019, Stefan Bruckner. Released under the [GPLv3 License](LICENSE.md).
+Please see https://vis.uib.no/team/bruckner/ for contact information.
