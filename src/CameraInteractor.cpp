@@ -16,6 +16,11 @@
 #include <glbinding/gl/gl.h>
 #include <glbinding/gl/enum.h>
 #include <glbinding/gl/functions.h>
+#include <globjects/globjects.h>
+#include <globjects/logging.h>
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/string_cast.hpp>
 
 #include "Viewer.h"
 
@@ -29,9 +34,12 @@ CameraInteractor::CameraInteractor(Viewer * viewer) : Interactor(viewer)
 	resetViewTransform();
 
 	globjects::debug() << "Camera interactor usage:";
-	globjects::debug() << "  Left mouse - rotate";
-	globjects::debug() << "  Middle mouse - pan";
-	globjects::debug() << "  Right mouse - zoom";
+	globjects::debug() << "  Drag left mouse - rotate";
+	globjects::debug() << "  Drag middle mouse - pan";
+	globjects::debug() << "  Drag right mouse - zoom";
+	globjects::debug() << "  Shift + Left mouse - light position";
+	globjects::debug() << "  H - toggle headlight";
+	globjects::debug() << "  B - benchmark";
 	globjects::debug() << "  Home - reset view";
 	globjects::debug() << "  Cursor left - rotate negative around current y-axis";
 	globjects::debug() << "  Cursor right - rotate positive around current y-axis";
@@ -147,13 +155,11 @@ void CameraInteractor::cursorPosEvent(double xpos, double ypos)
 
 	if (m_light)
 	{
+		vec3 v = arcballVector(m_xCurrent, m_yCurrent);
 		mat4 viewTransform = viewer()->viewTransform();
-		vec4 center = viewTransform * vec4(0.0f, 0.0f, 0.0f, 1.0);
-		vec4 corner = viewTransform * vec4(1.0f, 1.0f, 1.0f, 1.0f);
-		float radius = distance(corner, center);
-		vec3 viewLightDirection = arcballVector(m_xCurrent, m_yCurrent);//normalize(vec3(v.x, v.y, 0.0f));
-		vec4 viewLightPosition = center + vec4(viewLightDirection, 0.0f) * radius;
-		viewer()->setViewLightPosition(viewLightPosition);
+
+		mat4 lightTransform = inverse(viewTransform)*translate(mat4(1.0f), -0.5f*v*m_distance)*viewTransform;
+		viewer()->setLightTransform(lightTransform);
 	}
 
 	if (m_rotating)
@@ -169,11 +175,18 @@ void CameraInteractor::cursorPosEvent(double xpos, double ypos)
 				vec3 axis = cross(va, vb);
 
 				mat4 viewTransform = viewer()->viewTransform();
+				mat4 lightTransform = viewer()->lightTransform();
 				mat4 inverseViewTransform = inverse(viewTransform);
 				vec4 transformedAxis = inverseViewTransform * vec4(axis, 0.0);
 
 				mat4 newViewTransform = rotate(viewTransform, angle, vec3(transformedAxis));
 				viewer()->setViewTransform(newViewTransform);
+
+				if (m_headlight)
+				{
+					mat4 newLightTransform = rotate(lightTransform, angle, vec3(transformedAxis));
+					viewer()->setLightTransform(newLightTransform);
+				}
 			}
 		}
 
@@ -227,6 +240,13 @@ void CameraInteractor::cursorPosEvent(double xpos, double ypos)
 
 }
 
+void CameraInteractor::scrollEvent(double xoffset, double yoffset)
+{
+	mat4 viewTransform = viewer()->viewTransform();
+	mat4 newViewTransform = translate(mat4(1.0), vec3(0.0f, 0.0f, (yoffset / 8.0)))*viewTransform;
+	viewer()->setViewTransform(newViewTransform);
+}
+
 void CameraInteractor::display()
 {
 	if (m_benchmark)
@@ -258,19 +278,25 @@ void CameraInteractor::display()
 	if (ImGui::BeginMenu("Camera"))
 	{
 		static int projection = 0;
-		ImGui::RadioButton("Perspective", &projection,0);
-		ImGui::RadioButton("Orthographic", &projection,1);
+		ImGui::RadioButton("Perspective", &projection, 0);
+		ImGui::RadioButton("Orthographic", &projection, 1);
 
 		if ((projection == 0) != m_perspective)
 		{
 			m_perspective = (projection == 0);
 			resetProjectionTransform();
 		}
+
+		ImGui::Checkbox("Headlight", &m_headlight);
 		ImGui::EndMenu();
 	}
-	/*
+	
 	if (m_light)
 	{
+		const mat4 modelLightMatrix = viewer()->modelLightTransform();
+		const mat4 inverseModelLightMatrix = inverse(modelLightMatrix);
+		vec4 worldLightPosition = inverseModelLightMatrix * vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
 		glDepthFunc(GL_ALWAYS);
 		glMatrixMode(GL_PROJECTION);
 		glLoadMatrixf(value_ptr(viewer()->projectionTransform()));
@@ -278,12 +304,15 @@ void CameraInteractor::display()
 		glMatrixMode(GL_MODELVIEW);
 		glLoadMatrixf(value_ptr(viewer()->modelViewTransform()));
 
-		glColor4f(1.0, 1.0, 1.0, 1.0);
-		glPointSize(7.0);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+		glPointSize(17.0);
 		glBegin(GL_POINTS);
-		glVertex3fv(value_ptr(viewer()->worldLightPosition()));
+		glVertex3f(worldLightPosition.x, worldLightPosition.y, worldLightPosition.z);
 		glEnd();
-	}*/
+		glDisable(GL_BLEND);
+	}
 
 }
 
@@ -296,6 +325,7 @@ void CameraInteractor::resetProjectionTransform()
 void CameraInteractor::resetViewTransform()
 {
 	viewer()->setViewTransform(lookAt(vec3(0.0f, 0.0f, -m_distance), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f)));
+	viewer()->setLightTransform(lookAt(vec3(0.0f, 0.0f, -0.5f*m_distance), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f)));
 }
 
 vec3 CameraInteractor::arcballVector(double x, double y)

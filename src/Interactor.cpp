@@ -37,6 +37,10 @@ void Interactor::cursorPosEvent(double xpos, double ypos)
 {
 }
 
+void Interactor::scrollEvent(double xoffset, double yoffset)
+{
+}
+
 void Interactor::display()
 {
 }

@@ -381,6 +381,8 @@ void SphereRenderer::display()
 	const mat4 inverseViewMatrix = inverse(viewMatrix);
 	const mat4 modelViewMatrix = viewer()->modelViewTransform();
 	const mat4 inverseModelViewMatrix = inverse(modelViewMatrix);
+	const mat4 modelLightMatrix = viewer()->modelLightTransform();
+	const mat4 inverseModelLightMatrix = inverse(modelLightMatrix);
 	const mat4 modelViewProjectionMatrix = viewer()->modelViewProjectionTransform();
 	const mat4 inverseModelViewProjectionMatrix = inverse(modelViewProjectionMatrix);
 	const mat4 projectionMatrix = viewer()->projectionTransform();
@@ -398,6 +400,9 @@ void SphereRenderer::display()
 
 	vec4 nearPlane = inverseProjectionMatrix * vec4(0.0, 0.0, -1.0, 1.0);
 	nearPlane /= nearPlane.w;
+
+	vec4 worldLightPosition = inverseModelLightMatrix * vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	vec4 viewLightPosition = modelViewMatrix * worldLightPosition;
 
 	// all input parameters and their default values
 	static vec3 ambientMaterial(0.3f, 0.3f, 0.3f);
@@ -742,7 +747,7 @@ void SphereRenderer::display()
 	m_programSurface->setUniform("modelViewProjectionMatrix", modelViewProjectionMatrix);
 	m_programSurface->setUniform("inverseModelViewProjectionMatrix", inverseModelViewProjectionMatrix);
 	m_programSurface->setUniform("normalMatrix", normalMatrix);
-	m_programSurface->setUniform("lightPosition", vec3(viewer()->worldLightPosition()));
+	m_programSurface->setUniform("lightPosition", vec3(worldLightPosition));
 	m_programSurface->setUniform("ambientMaterial", ambientMaterial);
 	m_programSurface->setUniform("diffuseMaterial", diffuseMaterial);
 	m_programSurface->setUniform("specularMaterial", specularMaterial);
@@ -793,7 +798,7 @@ void SphereRenderer::display()
 
 		m_programAOSample->setUniform("projectionInfo", projectionInfo);
 		m_programAOSample->setUniform("projectionScale", projectionScale);
-		m_programAOSample->setUniform("viewLightPosition", modelViewMatrix*viewer()->worldLightPosition());
+		m_programAOSample->setUniform("viewLightPosition", viewLightPosition);
 		m_programAOSample->setUniform("surfaceNormalTexture", 0);
 
 		m_surfaceNormalTexture->bindActive(0);
@@ -871,7 +876,7 @@ void SphereRenderer::display()
 	m_programShade->setUniform("inverseModelViewProjectionMatrix", inverseModelViewProjectionMatrix);
 	m_programShade->setUniform("normalMatrix", normalMatrix);
 	m_programShade->setUniform("inverseNormalMatrix", inverseNormalMatrix);
-	m_programShade->setUniform("lightPosition", vec3(viewer()->worldLightPosition()));
+	m_programShade->setUniform("lightPosition", vec3(worldLightPosition));
 	m_programShade->setUniform("ambientMaterial", ambientMaterial);
 	m_programShade->setUniform("diffuseMaterial", diffuseMaterial);
 	m_programShade->setUniform("specularMaterial", specularMaterial);

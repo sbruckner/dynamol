@@ -6,12 +6,6 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-#include <globjects/Texture.h>
-#include <globjects/VertexArray.h>
-#include <globjects/VertexAttributeBinding.h>
-#include <globjects/Buffer.h>
-#include <globjects/Program.h>
-#include <globjects/Shader.h>
 #include <imgui.h>
 
 #include "Scene.h"
@@ -35,19 +29,20 @@ namespace dynamol
 		glm::vec3 backgroundColor() const;
 		glm::mat4 modelTransform() const;
 		glm::mat4 viewTransform() const;
+		glm::mat4 lightTransform() const;
 		glm::mat4 projectionTransform() const;
 
 		void setBackgroundColor(const glm::vec3& c);
 		void setViewTransform(const glm::mat4& m);
 		void setModelTransform(const glm::mat4& m);
+		void setLightTransform(const glm::mat4& m);
 		void setProjectionTransform(const glm::mat4& m);
 
 		glm::mat4 modelViewTransform() const;
 		glm::mat4 modelViewProjectionTransform() const;
 
-		void setViewLightPosition(const glm::vec4 & p);
-		glm::vec4 viewLightPosition() const;
-		glm::vec4 worldLightPosition() const;
+		glm::mat4 modelLightTransform() const;
+		glm::mat4 modelLightProjectionTransform() const;
 
 		void saveImage(const std::string & filename);
 
@@ -63,10 +58,6 @@ namespace dynamol
 		static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 		static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 		static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
-		static void charCallback(GLFWwindow* window, unsigned int c);
-
-		static const char* GetClipboardText(void* user_data);
-		static void SetClipboardText(void* user_data, const char* text);
 
 		GLFWwindow* m_window;
 		Scene *m_scene;
@@ -74,27 +65,11 @@ namespace dynamol
 		std::vector<std::unique_ptr<Interactor>> m_interactors;
 		std::vector<std::unique_ptr<Renderer>> m_renderers;
 
-		double m_time = 0.0;
-		bool m_mousePressed[3] = { false, false, false };
-		float m_mouseWheel = 0.0f;
-
-		std::unique_ptr<globjects::File> m_vertexShaderSourceUi = nullptr;
-		std::unique_ptr<globjects::File> m_fragmentShaderSourceUi = nullptr;
-
-		std::unique_ptr<globjects::Shader> m_vertexShaderUi = nullptr;
-		std::unique_ptr<globjects::Shader> m_fragmentShaderUi = nullptr;
-		std::unique_ptr<globjects::Program> m_programUi;
-
-		std::unique_ptr<globjects::Texture> m_fontTexture = nullptr;
-		std::unique_ptr<globjects::Buffer> m_verticesUi = nullptr;
-		std::unique_ptr<globjects::Buffer> m_indicesUi = nullptr;
-		std::unique_ptr<globjects::VertexArray> m_vaoUi = nullptr;
-
 		glm::vec3 m_backgroundColor = glm::vec3(0.0f, 0.0f, 0.0f);
 		glm::mat4 m_modelTransform = glm::mat4(1.0f);
 		glm::mat4 m_viewTransform = glm::mat4(1.0f);
+		glm::mat4 m_lightTransform = glm::mat4(1.0f);
 		glm::mat4 m_projectionTransform = glm::mat4(1.0f);
-		glm::vec4 m_viewLightPosition = glm::vec4(0.0f, 0.0f,2.0f*sqrt(3.0f),1.0f);
 
 		bool m_showUi = true;
 		bool m_saveScreenshot = false;

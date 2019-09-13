@@ -17,6 +17,7 @@ namespace dynamol
 		virtual void keyEvent(int key, int scancode, int action, int mods);
 		virtual void mouseButtonEvent(int button, int action, int mods);
 		virtual void cursorPosEvent(double xpos, double ypos);
+		virtual void scrollEvent(double xoffset, double yoffset);
 		virtual void display();
 
 	private:
