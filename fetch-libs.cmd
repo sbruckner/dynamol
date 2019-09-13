@@ -22,10 +22,10 @@ cd lib
 rd /S /Q imgui
 git clone https://github.com/ocornut/imgui.git
 
-rd /S /Q lodepng
-git clone https://github.com/lvandeve/lodepng.git
-
 rd /S /Q tinyfd
 git clone http://git.code.sf.net/p/tinyfiledialogs/code tinyfd
+
+rd /S /Q stb
+git clone https://github.com/nothings/stb.git
 
 cd ..

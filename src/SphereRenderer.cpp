@@ -7,37 +7,69 @@
 #include "Viewer.h"
 #include "Scene.h"
 #include "Protein.h"
-#include <lodepng.h>
 #include <sstream>
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 using namespace dynamol;
 using namespace gl;
 using namespace glm;
 using namespace globjects;
 
-void flip(std::vector<unsigned char> & image, uint width, uint height)
+std::unique_ptr<Texture> loadTexture(const std::string & filename)
 {
-	unsigned char *imagePtr = &image.front();
+	int width, height, channels;
 
-	uint rows = height / 2; // Iterate only half the buffer to get a full flip
-	uint cols = width * 4;
+	stbi_set_flip_vertically_on_load(true);
+	unsigned char *data = stbi_load(filename.c_str(), &width, &height, &channels, 0);
 
-	std::vector<unsigned char> temp(cols);
-	unsigned char *tempPtr = &temp.front();
-
-	for (uint rowIndex = 0; rowIndex < rows; rowIndex++)
+	if (data)
 	{
-		memcpy(tempPtr, imagePtr + rowIndex * cols, cols);
-		memcpy(imagePtr + rowIndex * cols, imagePtr + (height - rowIndex - 1) * cols, cols);
-		memcpy(imagePtr + (height - rowIndex - 1) * cols, tempPtr, cols);
+		std::cout << "Loaded " << filename << std::endl;
+
+		auto texture = Texture::create(GL_TEXTURE_2D);
+		texture->setParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		texture->setParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		texture->setParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
+		texture->setParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+		GLenum format = GL_RGBA;
+
+		switch (channels)
+		{
+		case 1:
+			format = GL_RED;
+			break;
+
+		case 2:
+			format = GL_RG;
+			break;
+
+		case 3:
+			format = GL_RGB;
+			break;
+
+		case 4:
+			format = GL_RGBA;
+			break;
+		}
+
+		texture->image2D(0, format, ivec2(width, height), 0, format, GL_UNSIGNED_BYTE, data);
+		texture->generateMipmap();
+
+		stbi_image_free(data);
+
+		return texture;
 	}
+
+	return std::unique_ptr<Texture>();
 }
 
 SphereRenderer::SphereRenderer(Viewer* viewer) : Renderer(viewer)
@@ -196,64 +228,33 @@ SphereRenderer::SphereRenderer(Viewer* viewer) : Renderer(viewer)
 	m_offsetTexture->setParameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	m_offsetTexture->image2D(0, GL_R32UI, m_framebufferSize, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
 
+	stbi_set_flip_vertically_on_load(true);
+
 	for (auto& d : std::filesystem::directory_iterator("./dat/environments"))
 	{
 		std::filesystem::path environmentPath(d);
 
-		if (environmentPath.extension().string() == ".png")
-		{
-			std::vector<unsigned char> environmentImage;
-			uint environmentWidth, environmentHeight;
+		std::unique_ptr<Texture> texture = loadTexture(environmentPath.string());
 
-			uint error = lodepng::decode(environmentImage, environmentWidth, environmentHeight, environmentPath.string());
+		if (texture)
+			m_environmentTextures.push_back(std::move(texture));
 
-			if (error)
-			{
-				globjects::debug() << "Could not load " << environmentPath.string() << "!";
-			}
-			else
-			{
-				auto environmentTexture = Texture::create(GL_TEXTURE_2D);
-				environmentTexture->setParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-				environmentTexture->setParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				environmentTexture->setParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
-				environmentTexture->setParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
-				environmentTexture->image2D(0, GL_RGBA, environmentWidth, environmentHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (void*)&environmentImage.front());
-				environmentTexture->generateMipmap();
-
-				m_environmentTextures.push_back(std::move(environmentTexture));
-			}
-		}
 	}
 
 	for (auto& d : std::filesystem::directory_iterator("./dat/materials"))
 	{
 		std::filesystem::path materialPath(d);
 
-		if (materialPath.extension().string() == ".png")
+		std::unique_ptr<Texture> texture = loadTexture(materialPath.string());
+
+		if (texture)
 		{
-			std::vector<unsigned char> materialImage;
-			uint materialWidth, materialHeight;
+			texture->setParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			texture->setParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			texture->setParameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			texture->setParameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-			uint error = lodepng::decode(materialImage, materialWidth, materialHeight, materialPath.string());
-			
-			if (error)
-			{
-				globjects::debug() << "Could not load " << materialPath.string() << "!";
-			}
-			else
-			{
-				flip(materialImage, materialWidth, materialHeight);
-
-				auto materialTexture = Texture::create(GL_TEXTURE_2D);
-				materialTexture->setParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				materialTexture->setParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				materialTexture->setParameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-				materialTexture->setParameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-				materialTexture->image2D(0, GL_RGBA, materialWidth, materialHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (void*)&materialImage.front());
-
-				m_materialTextures.push_back(std::move(materialTexture));
-			}
+			m_materialTextures.push_back(std::move(texture));
 		}
 	}
 	
@@ -261,30 +262,10 @@ SphereRenderer::SphereRenderer(Viewer* viewer) : Renderer(viewer)
 	{
 		std::filesystem::path bumpPath(d);
 
-		if (bumpPath.extension().string() == ".png")
-		{
-			std::vector<unsigned char> bumpImage;
-			uint bumpWidth, bumpHeight;
+		std::unique_ptr<Texture> texture = loadTexture(bumpPath.string());
 
-			uint error = lodepng::decode(bumpImage, bumpWidth, bumpHeight, bumpPath.string());
-
-			if (error)
-			{
-				globjects::debug() << "Could not load " << bumpPath.string() << "!";
-			}
-			else
-			{
-				auto bumpTexture = Texture::create(GL_TEXTURE_2D);
-				bumpTexture->setParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-				bumpTexture->setParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				bumpTexture->setParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
-				bumpTexture->setParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
-				bumpTexture->image2D(0, GL_RGBA, bumpWidth, bumpHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (void*)&bumpImage.front());
-				bumpTexture->generateMipmap();
-
-				m_bumpTextures.push_back(std::move(bumpTexture));
-			}
-		}
+		if (texture)
+			m_bumpTextures.push_back(std::move(texture));
 	}
 
 	m_sphereFramebuffer = Framebuffer::create();

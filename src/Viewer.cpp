@@ -21,7 +21,9 @@
 #include <fstream>
 #include <sstream>
 #include <list>
-#include <lodepng.h>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
 
 using namespace dynamol;
 using namespace gl;
@@ -181,22 +183,11 @@ void Viewer::saveImage(const std::string & filename)
 {
 	uvec2 size = viewportSize();
 	std::vector<unsigned char> image(size.x*size.y * 4);
-	std::vector<unsigned char> flipped(size.x*size.y * 4);
 
 	glReadPixels(0, 0, size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, (void*)&image.front());
 
-	for (uint y = 0; y < size.y; y++)
-	{
-		for (uint x = 0; x < size.x; x++)
-		{
-			flipped[4* x + 0 + 4 * y*size.x] = image[4 * x + 0 + 4 * (size.y - 1 - y)*size.x];
-		flipped[4* x + 1 + 4 * y*size.x] = image[4 * x + 1 + 4 * (size.y - 1 - y)*size.x];
-			flipped[4* x + 2 + 4 * y*size.x] = image[4 * x + 2 + 4 * (size.y - 1 - y)*size.x];
-			flipped[4* x + 3 + 4 * y*size.x] = image[4 * x + 3 + 4 * (size.y - 1 - y)*size.x];
-		}
-	}
-
-	lodepng::encode(filename, flipped, size.x, size.y);
+	stbi_flip_vertically_on_write(true);
+	stbi_write_png(filename.c_str(), size.x, size.y, 4, &image.front(), size.x * 4);
 }
 
 void Viewer::framebufferSizeCallback(GLFWwindow* window, int width, int height)
