@@ -11,7 +11,8 @@ list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/lib/globjects)
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/lib/glfw)
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/lib/tinyfd)
 
-find_package(glm REQUIRED)
+set(glm_DIR ${CMAKE_SOURCE_DIR}/lib/glm/cmake/glm) 
+
 find_package(glbinding REQUIRED)
 find_package(globjects REQUIRED)
 find_package(glfw3 REQUIRED)
@@ -19,6 +20,7 @@ find_package(glfw3 REQUIRED)
 include_directories(${CMAKE_SOURCE_DIR}/lib/imgui/)
 include_directories(${CMAKE_SOURCE_DIR}/lib/tinyfd/)
 include_directories(${CMAKE_SOURCE_DIR}/lib/stb/)
+include_directories(${CMAKE_SOURCE_DIR}/lib/glm/)
 
 target_link_libraries(dynamol PUBLIC glfw)
 target_link_libraries(dynamol PUBLIC glbinding::glbinding )
