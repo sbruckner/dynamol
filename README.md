@@ -79,7 +79,7 @@ and/or
 cmake --build --config Release
 ```
 
-After building, the executables will be available in the ```./bin/Debug``` and ```./bin/Release``` folders.
+After building, the executables will be available in the ```./bin``` folder.
 
 ## Running
 

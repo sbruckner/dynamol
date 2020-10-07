@@ -7,14 +7,9 @@ goto End
 
 :Copy
 
-md "%BINARY_DIRECTORY%/Debug"
-robocopy "%LIBRARY_DIRECTORY%/%1" "%BINARY_DIRECTORY%/Debug" *d.dll
-robocopy "%LIBRARY_DIRECTORY%/%1/bin" "%BINARY_DIRECTORY%/Debug" *d.dll
-
-md "%BINARY_DIRECTORY%/Release"
-robocopy "%LIBRARY_DIRECTORY%/%1" "%BINARY_DIRECTORY%/Release" *.dll /XF *d.dll
-robocopy "%LIBRARY_DIRECTORY%/%1/bin" "%BINARY_DIRECTORY%/Release" *.dll /XF *d.dll
-
+md "%BINARY_DIRECTORY%"
+robocopy "%LIBRARY_DIRECTORY%/%1" "%BINARY_DIRECTORY%" *.dll
+robocopy "%LIBRARY_DIRECTORY%/%1/bin" "%BINARY_DIRECTORY%" *.dll
 
 GOTO :eof
 
