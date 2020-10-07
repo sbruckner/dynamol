@@ -11,9 +11,9 @@ We provide the full source code of the method that was used to generate the resu
 
 ## Getting Started
 
-DynaMol was developed under Windows using Microsoft Visual Studio 2017. It uses [CMake](https://cmake.org/) as its build system and does not contain anything else platform-specific, so it should in principle work using other compilers and operating systems, but this has not been tested. Should there be any issues, we are grateful for any input that helps us make the software work on as many platforms as possible.
+DynaMol was developed under Windows using Microsoft Visual Studio 2019. It uses [CMake](https://cmake.org/) as its build system and does not contain anything else platform-specific, so it should in principle work using other compilers and operating systems, but this has not been tested. Should there be any issues, we are grateful for any input that helps us make the software work on as many platforms as possible.
 
-The easiest way to get started is to use our release package which, in addition to the source code, contains all prebuilt dependencies and binaries for Windows and Visual Studio 2017 (64-Bit). It is available here:
+The easiest way to get started is to use our release package which, in addition to the source code, contains all prebuilt dependencies and binaries for Windows and Visual Studio 2019 (64-Bit). It is available here:
 
 https://github.com/sbruckner/dynamol/releases
 
@@ -57,7 +57,7 @@ The other libraries use CMake, so just follow their respective instructions and 
 
 ## Building
 
-If you are using Visual Studio 2017, you can use its integrated CMake support to build and run the project. When running the program from within the IDE, make sure so select "dynamol.exe" as the Startup Item. This will make sure that the current working directory is set to the project root (see the ```./.vs/launch.vs.json file```), so that all resources can be found by the executable.
+If you are using Visual Studio 2019, you can use its integrated CMake support to build and run the project. When running the program from within the IDE, make sure so select "dynamol.exe" as the Startup Item. This will make sure that the current working directory is set to the project root (see the ```./.vs/launch.vs.json file```), so that all resources can be found by the executable.
 
 When instead building from the command line, run the following commands from the project root folder:
 

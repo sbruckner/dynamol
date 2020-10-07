@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 
 	// Scaling the model's bounding box to the canonical view volume
 	vec3 boundingBoxSize = scene->protein()->maximumBounds() - scene->protein()->minimumBounds();
-	float maximumSize = std::max({ boundingBoxSize.x, boundingBoxSize.y, boundingBoxSize.z });
+	float maximumSize = std::max( boundingBoxSize.x, std::max(boundingBoxSize.y, boundingBoxSize.z) );
 	mat4 modelTransform =  scale(vec3(2.0f) / vec3(maximumSize)); 
 	modelTransform = modelTransform * translate(-0.5f*(scene->protein()->minimumBounds() + scene->protein()->maximumBounds()));
 	viewer->setModelTransform(modelTransform);
