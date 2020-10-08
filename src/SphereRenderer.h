@@ -50,6 +50,7 @@ namespace dynamol
 		std::unique_ptr<globjects::Program> m_programShade = std::make_unique<globjects::Program>();
 		std::unique_ptr<globjects::Program> m_programDOFBlur = std::make_unique<globjects::Program>();
 		std::unique_ptr<globjects::Program> m_programDOFBlend = std::make_unique<globjects::Program>();
+		std::unique_ptr<globjects::Program> m_programDisplay = std::make_unique<globjects::Program>();
 
 		std::unique_ptr<globjects::StaticStringSource> m_shaderSourceDefines = nullptr;
 		std::unique_ptr<globjects::NamedString> m_shaderDefines = nullptr;
@@ -104,6 +105,10 @@ namespace dynamol
 		std::unique_ptr<globjects::File> m_fragmentShaderSourceDOFBlend = nullptr;
 		std::unique_ptr<globjects::AbstractStringSource> m_fragmentShaderTemplateDOFBlend = nullptr;
 		std::unique_ptr<globjects::Shader> m_fragmentShaderDOFBlend = nullptr;
+
+		std::unique_ptr<globjects::File> m_fragmentShaderSourceDisplay = nullptr;
+		std::unique_ptr<globjects::AbstractStringSource> m_fragmentShaderTemplateDisplay = nullptr;
+		std::unique_ptr<globjects::Shader> m_fragmentShaderDisplay = nullptr;
 
 		std::unique_ptr<globjects::Buffer> m_intersectionBuffer = std::make_unique<globjects::Buffer>();
 		std::unique_ptr<globjects::Buffer> m_statisticsBuffer = std::make_unique<globjects::Buffer>();

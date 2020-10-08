@@ -23,12 +23,12 @@ using namespace gl;
 using namespace glm;
 using namespace globjects;
 
-std::unique_ptr<Texture> loadTexture(const std::string & filename)
+std::unique_ptr<Texture> loadTexture(const std::string& filename)
 {
 	int width, height, channels;
 
 	stbi_set_flip_vertically_on_load(true);
-	unsigned char *data = stbi_load(filename.c_str(), &width, &height, &channels, 0);
+	unsigned char* data = stbi_load(filename.c_str(), &width, &height, &channels, 0);
 
 	if (data)
 	{
@@ -81,12 +81,12 @@ SphereRenderer::SphereRenderer(Viewer* viewer) : Renderer(viewer)
 		m_vertices.push_back(Buffer::create());
 		m_vertices.back()->setStorage(i, gl::GL_NONE_BIT);
 	}
-	
+
 	m_elementColorsRadii->setStorage(viewer->scene()->protein()->activeElementColorsRadiiPacked(), gl::GL_NONE_BIT);
 	m_residueColors->setStorage(viewer->scene()->protein()->activeResidueColorsPacked(), gl::GL_NONE_BIT);
 	m_chainColors->setStorage(viewer->scene()->protein()->activeChainColorsPacked(), gl::GL_NONE_BIT);
-	
-	m_intersectionBuffer->setStorage(sizeof(vec3) * 1024*1024*128 + sizeof(uint), nullptr, gl::GL_NONE_BIT);
+
+	m_intersectionBuffer->setStorage(sizeof(vec3) * 1024 * 1024 * 128 + sizeof(uint), nullptr, gl::GL_NONE_BIT);
 
 	m_verticesQuad->setStorage(std::array<vec3, 1>({ vec3(0.0f, 0.0f, 0.0f) }), gl::GL_NONE_BIT);
 	auto vertexBindingQuad = m_vaoQuad->binding(0);
@@ -113,7 +113,8 @@ SphereRenderer::SphereRenderer(Viewer* viewer) : Renderer(viewer)
 	m_fragmentShaderSourceShade = Shader::sourceFromFile("./res/sphere/shade-fs.glsl");
 	m_fragmentShaderSourceDOFBlur = Shader::sourceFromFile("./res/sphere/dofblur-fs.glsl");
 	m_fragmentShaderSourceDOFBlend = Shader::sourceFromFile("./res/sphere/dofblend-fs.glsl");
-	
+	m_fragmentShaderSourceDisplay = Shader::sourceFromFile("./res/sphere/display-fs.glsl");
+
 	m_vertexShaderTemplateSphere = Shader::applyGlobalReplacements(m_vertexShaderSourceSphere.get());
 	m_geometryShaderTemplateSphere = Shader::applyGlobalReplacements(m_geometryShaderSourceSphere.get());
 	m_fragmentShaderTemplateSphere = Shader::applyGlobalReplacements(m_fragmentShaderSourceSphere.get());
@@ -126,6 +127,7 @@ SphereRenderer::SphereRenderer(Viewer* viewer) : Renderer(viewer)
 	m_fragmentShaderTemplateShade = Shader::applyGlobalReplacements(m_fragmentShaderSourceShade.get());
 	m_fragmentShaderTemplateDOFBlur = Shader::applyGlobalReplacements(m_fragmentShaderSourceDOFBlur.get());
 	m_fragmentShaderTemplateDOFBlend = Shader::applyGlobalReplacements(m_fragmentShaderSourceDOFBlend.get());
+	m_fragmentShaderTemplateDisplay = Shader::applyGlobalReplacements(m_fragmentShaderSourceDisplay.get());
 
 	m_vertexShaderSphere = Shader::create(GL_VERTEX_SHADER, m_vertexShaderTemplateSphere.get());
 	m_geometryShaderSphere = Shader::create(GL_GEOMETRY_SHADER, m_geometryShaderTemplateSphere.get());
@@ -139,6 +141,7 @@ SphereRenderer::SphereRenderer(Viewer* viewer) : Renderer(viewer)
 	m_fragmentShaderShade = Shader::create(GL_FRAGMENT_SHADER, m_fragmentShaderTemplateShade.get());
 	m_fragmentShaderDOFBlur = Shader::create(GL_FRAGMENT_SHADER, m_fragmentShaderTemplateDOFBlur.get());
 	m_fragmentShaderDOFBlend = Shader::create(GL_FRAGMENT_SHADER, m_fragmentShaderTemplateDOFBlend.get());
+	m_fragmentShaderDisplay = Shader::create(GL_FRAGMENT_SHADER, m_fragmentShaderTemplateDisplay.get());
 
 	m_programSphere->attach(m_vertexShaderSphere.get(), m_geometryShaderSphere.get(), m_fragmentShaderSphere.get());
 	m_programSpawn->attach(m_vertexShaderSphere.get(), m_geometryShaderSphere.get(), m_fragmentShaderSpawn.get());
@@ -148,6 +151,7 @@ SphereRenderer::SphereRenderer(Viewer* viewer) : Renderer(viewer)
 	m_programShade->attach(m_vertexShaderImage.get(), m_geometryShaderImage.get(), m_fragmentShaderShade.get());
 	m_programDOFBlur->attach(m_vertexShaderImage.get(), m_geometryShaderImage.get(), m_fragmentShaderDOFBlur.get());
 	m_programDOFBlend->attach(m_vertexShaderImage.get(), m_geometryShaderImage.get(), m_fragmentShaderDOFBlend.get());
+	m_programDisplay->attach(m_vertexShaderImage.get(), m_geometryShaderImage.get(), m_fragmentShaderDisplay.get());
 
 	m_framebufferSize = viewer->viewportSize();
 
@@ -257,7 +261,7 @@ SphereRenderer::SphereRenderer(Viewer* viewer) : Renderer(viewer)
 			m_materialTextures.push_back(std::move(texture));
 		}
 	}
-	
+
 	for (auto& d : std::filesystem::directory_iterator("./dat/bumps"))
 	{
 		std::filesystem::path bumpPath(d);
@@ -308,7 +312,7 @@ SphereRenderer::SphereRenderer(Viewer* viewer) : Renderer(viewer)
 
 std::list<globjects::File*> SphereRenderer::shaderFiles() const
 {
-	return std::list<globjects::File*>({ 
+	return std::list<globjects::File*>({
 		m_shaderSourceGlobals.get(),
 		m_vertexShaderSourceSphere.get(),
 		m_geometryShaderSourceSphere.get(),
@@ -321,7 +325,8 @@ std::list<globjects::File*> SphereRenderer::shaderFiles() const
 		m_fragmentShaderSourceAOBlur.get(),
 		m_fragmentShaderSourceShade.get(),
 		m_fragmentShaderSourceDOFBlur.get(),
-		m_fragmentShaderSourceDOFBlend.get()
+		m_fragmentShaderSourceDOFBlend.get(),
+		m_fragmentShaderSourceDisplay.get()
 		});
 }
 
@@ -333,7 +338,9 @@ void SphereRenderer::display()
 	// SaveOpenGL state
 	auto currentState = State::currentState();
 
-	const ivec2 viewportSize = viewer()->viewportSize();
+	static float resolutionScale = 1.0f;
+
+	const ivec2 viewportSize = ivec2(vec2(viewer()->viewportSize()) * resolutionScale);
 
 	// Resize all FBOs if the viewport size has changed
 	if (viewportSize != m_framebufferSize)
@@ -408,7 +415,7 @@ void SphereRenderer::display()
 	static float animationFrequency = 1.0f;
 	static bool lens = false;
 
-	static float focalDistance = 2.0f*sqrt(3.0f);
+	static float focalDistance = 2.0f * sqrt(3.0f);
 	static float maximumCoCRadius = 9.0f;
 	static float farRadiusRescale = 1.0f;
 	static float focalLength = 1.0f;
@@ -417,160 +424,163 @@ void SphereRenderer::display()
 	static int fStop_current = 12;
 	const char* fStops[] = { "0.7", "0.8", "1.0", "1.2", "1.4", "1.7", "2.0", "2.4", "2.8", "3.3", "4.0", "4.8", "5.6", "6.7", "8.0", "9.5", "11.0", "16.0", "22.0", "32.0" };
 
-
-	// user interface for manipulating rendering parameters
-	ImGui::Begin("Surface Renderer");
-
-	if (ImGui::CollapsingHeader("Lighting"))
-	{
-		ImGui::ColorEdit3("Ambient", (float*)&ambientMaterial);
-		ImGui::ColorEdit3("Diffuse", (float*)&diffuseMaterial);
-		ImGui::ColorEdit3("Specular", (float*)&specularMaterial);
-		ImGui::SliderFloat("Shininess", &shininess, 1.0f, 256.0f);
-		ImGui::Checkbox("Ambient Occlusion Enabled", &ambientOcclusion);
-		ImGui::Checkbox("Material Mapping Enabled", &materialMapping);
-		ImGui::Checkbox("Normal Mapping Enabled", &normalMapping);
-		ImGui::Checkbox("Environment Mapping Enabled", &environmentMapping);
-		ImGui::Checkbox("Depth of Field Enabled", &depthOfField);
-	}
-
-	if (ImGui::CollapsingHeader("Surface"))
-	{		
-		ImGui::SliderFloat("Sharpness", &sharpness, 0.5f, 16.0f);
-		ImGui::SliderFloat("Dist. Blending", &distanceBlending, 0.0f, 1.0f);
-		ImGui::SliderFloat("Dist. Scale", &distanceScale, 0.0f, 16.0f);
-		ImGui::Combo("Coloring", &coloring, "None\0Element\0Residue\0Chain\0");
-		ImGui::Checkbox("Magic Lens", &lens);
-	}
-
 	static uint environmentTextureIndex = 0;
-
-	if (environmentMapping)
-	{
-		if (ImGui::CollapsingHeader("Environment Mapping"))
-		{
-			if (ImGui::ListBoxHeader("Environment Map"))
-			{
-				for (uint i = 0; i < m_environmentTextures.size(); i++)
-				{
-					auto& texture = m_environmentTextures[i];
-					bool selected = (i == environmentTextureIndex);
-					ImGui::BeginGroup();
-					ImGui::PushID(i);
-
-					if (ImGui::Selectable("", &selected, 0, ImVec2(0.0f, 32.0f)))
-						environmentTextureIndex = i;
-
-					ImGui::SameLine();
-					ImGui::Image((ImTextureID)texture->id(), ImVec2(32.0f, 32.0f));
-					ImGui::PopID();
-					ImGui::EndGroup();
-				}
-
-				ImGui::ListBoxFooter();
-			}
-
-			ImGui::Checkbox("Use for Illumination", &environmentLighting);
-		}
-	}
-
 	static uint materialTextureIndex = 0;
-
-	if (materialMapping)
-	{
-		if (ImGui::CollapsingHeader("Material Mapping"))
-		{
-			if (ImGui::ListBoxHeader("Material Map"))
-			{
-				for (uint i = 0; i < m_materialTextures.size(); i++)
-				{
-					auto& texture = m_materialTextures[i];
-					bool selected = (i == materialTextureIndex);
-					ImGui::BeginGroup();
-					ImGui::PushID(i);
-
-					if (ImGui::Selectable("", &selected, 0, ImVec2(0.0f, 32.0f)))
-						materialTextureIndex = i;
-
-					ImGui::SameLine();
-					ImGui::Image((ImTextureID)texture->id(), ImVec2(32.0f, 32.0f));
-					ImGui::PopID();
-					ImGui::EndGroup();
-				}
-
-				ImGui::ListBoxFooter();
-			}
-		}
-	}
-		
 	static uint bumpTextureIndex = 0;
 
-	if (normalMapping)
+	// user interface for manipulating rendering parameters
+	if (ImGui::BeginMenu("Renderer"))
 	{
-		if (ImGui::CollapsingHeader("Normal Mapping"))
+		ImGui::SliderFloat("Resolution Scale", &resolutionScale, 0.25f, 8.0f);
+
+		if (ImGui::CollapsingHeader("Lighting"))
 		{
-			if (ImGui::ListBoxHeader("Normal Map"))
+			ImGui::ColorEdit3("Ambient", (float*)&ambientMaterial);
+			ImGui::ColorEdit3("Diffuse", (float*)&diffuseMaterial);
+			ImGui::ColorEdit3("Specular", (float*)&specularMaterial);
+			ImGui::SliderFloat("Shininess", &shininess, 1.0f, 256.0f);
+			ImGui::Checkbox("Ambient Occlusion Enabled", &ambientOcclusion);
+			ImGui::Checkbox("Material Mapping Enabled", &materialMapping);
+			ImGui::Checkbox("Normal Mapping Enabled", &normalMapping);
+			ImGui::Checkbox("Environment Mapping Enabled", &environmentMapping);
+			ImGui::Checkbox("Depth of Field Enabled", &depthOfField);
+		}
+
+		if (ImGui::CollapsingHeader("Surface"))
+		{
+			ImGui::SliderFloat("Sharpness", &sharpness, 0.5f, 16.0f);
+			ImGui::SliderFloat("Dist. Blending", &distanceBlending, 0.0f, 1.0f);
+			ImGui::SliderFloat("Dist. Scale", &distanceScale, 0.0f, 16.0f);
+			ImGui::Combo("Coloring", &coloring, "None\0Element\0Residue\0Chain\0");
+			ImGui::Checkbox("Magic Lens", &lens);
+		}
+
+
+		if (environmentMapping)
+		{
+			if (ImGui::CollapsingHeader("Environment Mapping"))
 			{
-				for (uint i = 0; i < m_bumpTextures.size(); i++)
+				if (ImGui::ListBoxHeader("Environment Map"))
 				{
-					auto& texture = m_bumpTextures[i];
-					bool selected = (i == bumpTextureIndex);
-					ImGui::BeginGroup();
-					ImGui::PushID(i);
+					for (uint i = 0; i < m_environmentTextures.size(); i++)
+					{
+						auto& texture = m_environmentTextures[i];
+						bool selected = (i == environmentTextureIndex);
+						ImGui::BeginGroup();
+						ImGui::PushID(i);
 
-					if (ImGui::Selectable("", &selected, 0, ImVec2(0.0f, 32.0f)))
-						bumpTextureIndex = i;
+						if (ImGui::Selectable("", &selected, 0, ImVec2(0.0f, 32.0f)))
+							environmentTextureIndex = i;
 
-					ImGui::SameLine();
-					ImGui::Image((ImTextureID)texture->id(), ImVec2(32.0f, 32.0f));
-					ImGui::PopID();
-					ImGui::EndGroup();
+						ImGui::SameLine();
+						ImGui::Image((ImTextureID)texture->id(), ImVec2(32.0f, 32.0f));
+						ImGui::PopID();
+						ImGui::EndGroup();
+					}
+
+					ImGui::ListBoxFooter();
 				}
 
-				ImGui::ListBoxFooter();
+				ImGui::Checkbox("Use for Illumination", &environmentLighting);
 			}
 		}
-	}
-	
-	if (depthOfField)
-	{
-		if (ImGui::CollapsingHeader("Depth of Field"))
+
+
+		if (materialMapping)
 		{
-			ImGui::SliderFloat("Focal Distance", &focalDistance, 0.1f, 35.0f);
-			ImGui::Combo("F-stop", &fStop_current, fStops, IM_ARRAYSIZE(fStops));
+			if (ImGui::CollapsingHeader("Material Mapping"))
+			{
+				if (ImGui::ListBoxHeader("Material Map"))
+				{
+					for (uint i = 0; i < m_materialTextures.size(); i++)
+					{
+						auto& texture = m_materialTextures[i];
+						bool selected = (i == materialTextureIndex);
+						ImGui::BeginGroup();
+						ImGui::PushID(i);
 
-			ImGui::SliderFloat("Max. CoC Radius", &maximumCoCRadius, 1.0f, 20.0f);
-			ImGui::SliderFloat("Far Radius Scale", &farRadiusRescale, 0.1f, 5.0f);
+						if (ImGui::Selectable("", &selected, 0, ImVec2(0.0f, 32.0f)))
+							materialTextureIndex = i;
 
+						ImGui::SameLine();
+						ImGui::Image((ImTextureID)texture->id(), ImVec2(32.0f, 32.0f));
+						ImGui::PopID();
+						ImGui::EndGroup();
+					}
+
+					ImGui::ListBoxFooter();
+				}
+			}
 		}
+
+
+		if (normalMapping)
+		{
+			if (ImGui::CollapsingHeader("Normal Mapping"))
+			{
+				if (ImGui::ListBoxHeader("Normal Map"))
+				{
+					for (uint i = 0; i < m_bumpTextures.size(); i++)
+					{
+						auto& texture = m_bumpTextures[i];
+						bool selected = (i == bumpTextureIndex);
+						ImGui::BeginGroup();
+						ImGui::PushID(i);
+
+						if (ImGui::Selectable("", &selected, 0, ImVec2(0.0f, 32.0f)))
+							bumpTextureIndex = i;
+
+						ImGui::SameLine();
+						ImGui::Image((ImTextureID)texture->id(), ImVec2(32.0f, 32.0f));
+						ImGui::PopID();
+						ImGui::EndGroup();
+					}
+
+					ImGui::ListBoxFooter();
+				}
+			}
+		}
+
+		if (depthOfField)
+		{
+			if (ImGui::CollapsingHeader("Depth of Field"))
+			{
+				ImGui::SliderFloat("Focal Distance", &focalDistance, 0.1f, 35.0f);
+				ImGui::Combo("F-stop", &fStop_current, fStops, IM_ARRAYSIZE(fStops));
+
+				ImGui::SliderFloat("Max. CoC Radius", &maximumCoCRadius, 1.0f, 20.0f);
+				ImGui::SliderFloat("Far Radius Scale", &farRadiusRescale, 0.1f, 5.0f);
+
+			}
+		}
+
+		fStop = std::stof(fStops[fStop_current]);
+		focalLength = 1.0f / (tan(fieldOfView * 0.5f) * 2.0f);
+		aparture = focalLength / fStop;
+
+		if (ImGui::CollapsingHeader("Animation"))
+		{
+			ImGui::Checkbox("Prodecural Animation", &animate);
+			ImGui::SliderFloat("Frequency", &animationFrequency, 1.0f, 256.0f);
+			ImGui::SliderFloat("Amplitude", &animationAmplitude, 1.0f, 32.0f);
+		}
+
+		ImGui::EndMenu();
 	}
-
-	fStop = std::stof(fStops[fStop_current]);
-	focalLength = 1.0f / (tan(fieldOfView * 0.5f) * 2.0f);
-	aparture = focalLength / fStop;
-
-	if (ImGui::CollapsingHeader("Animation"))
-	{
-		ImGui::Checkbox("Prodecural Animation", &animate);
-		ImGui::SliderFloat("Frequency", &animationFrequency, 1.0f, 256.0f);
-		ImGui::SliderFloat("Amplitude", &animationAmplitude, 1.0f, 32.0f);
-	}
-
-	ImGui::End();
 
 	// Scaling for sphere of influence radius based on estimated density
 	const float contributingAtoms = 32.0f;
-	const float radiusScale = sqrtf(log(contributingAtoms*exp(sharpness)) / sharpness);
+	const float radiusScale = sqrtf(log(contributingAtoms * exp(sharpness)) / sharpness);
 
 	// Properties for animation
 	const uint timestepCount = (uint)viewer()->scene()->protein()->atoms().size();
 	const float animationTime = animate ? float(glfwGetTime()) : -1.0f;
-	const float currentTime = glfwGetTime()*animationFrequency;
+	const float currentTime = glfwGetTime() * animationFrequency;
 	const uint currentTimestep = uint(currentTime) % timestepCount;
 	const uint nextTimestep = (currentTimestep + 1) % timestepCount;
 	const float animationDelta = currentTime - floor(currentTime);
 	const int vertexCount = int(viewer()->scene()->protein()->atoms()[currentTimestep].size());
-	
+
 	// Defines for enabling/disabling shader feature based on parameter setting
 	std::string defines = "";
 
@@ -616,7 +626,7 @@ void SphereRenderer::display()
 	vertexBinding->setBuffer(m_vertices[currentTimestep].get(), 0, sizeof(vec4));
 	vertexBinding->setFormat(4, GL_FLOAT);
 	m_vao->enable(0);
-	
+
 	if (timestepCount > 0)
 	{
 		auto nextVertexBinding = m_vao->binding(1);
@@ -625,6 +635,8 @@ void SphereRenderer::display()
 		nextVertexBinding->setFormat(4, GL_FLOAT);
 		m_vao->enable(1);
 	}
+
+	glViewport(0, 0, viewportSize.x, viewportSize.y);
 
 	//////////////////////////////////////////////////////////////////////////
 	// Sphere rendering pass
@@ -676,7 +688,7 @@ void SphereRenderer::display()
 	m_elementColorsRadii->bindBase(GL_UNIFORM_BUFFER, 0);
 	m_residueColors->bindBase(GL_UNIFORM_BUFFER, 1);
 	m_chainColors->bindBase(GL_UNIFORM_BUFFER, 2);
-	
+
 	m_programSpawn->setUniform("modelViewMatrix", modelViewMatrix);
 	m_programSpawn->setUniform("projectionMatrix", projectionMatrix);
 	m_programSpawn->setUniform("modelViewProjectionMatrix", modelViewProjectionMatrix);
@@ -744,7 +756,7 @@ void SphereRenderer::display()
 	m_programSurface->setUniform("coloring", uint(coloring));
 	m_programSurface->setUniform("environment", environmentMapping);
 	m_programSurface->setUniform("lens", lens);
-	
+
 	m_vaoQuad->bind();
 	m_programSurface->use();
 	m_vaoQuad->drawArrays(GL_POINTS, 0, 1);
@@ -799,7 +811,7 @@ void SphereRenderer::display()
 		m_aoBlurFramebuffer->bind();
 		m_programAOBlur->setUniform("normalTexture", 0);
 		m_programAOBlur->setUniform("ambientTexture", 1);
-		m_programAOBlur->setUniform("offset", vec2(1.0f/float(viewportSize.x),0.0f));
+		m_programAOBlur->setUniform("offset", vec2(1.0f / float(viewportSize.x), 0.0f));
 
 		m_ambientTexture->bindActive(1);
 
@@ -818,7 +830,7 @@ void SphereRenderer::display()
 		//////////////////////////////////////////////////////////////////////////
 		m_aoFramebuffer->bind();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		m_programAOBlur->setUniform("offset", vec2(0.0f,1.0f / float(viewportSize.y)));
+		m_programAOBlur->setUniform("offset", vec2(0.0f, 1.0f / float(viewportSize.y)));
 
 		m_blurTexture->bindActive(1);
 
@@ -919,7 +931,7 @@ void SphereRenderer::display()
 
 		m_colorTexture->bindActive(0);
 		m_colorTexture->bindActive(1);
-		
+
 		m_programDOFBlur->setUniform("maximumCoCRadius", maximumCoCRadius);
 		m_programDOFBlur->setUniform("aparture", aparture);
 		m_programDOFBlur->setUniform("focalDistance", focalDistance);
@@ -994,9 +1006,33 @@ void SphereRenderer::display()
 		m_sphereDiffuseTexture->unbindActive(0);
 		m_shadeFramebuffer->unbind();
 	}
-	
-	// Blit final image into visible framebuffer
-	m_shadeFramebuffer->blit(GL_COLOR_ATTACHMENT0, {0,0,viewer()->viewportSize().x, viewer()->viewportSize().y}, Framebuffer::defaultFBO().get(), GL_BACK, { 0,0,viewer()->viewportSize().x, viewer()->viewportSize().y }, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+	if (viewportSize == viewer()->viewportSize())
+	{
+		// Blit final image into visible framebuffer
+		m_shadeFramebuffer->blit(GL_COLOR_ATTACHMENT0, { 0,0,viewer()->viewportSize().x, viewer()->viewportSize().y }, Framebuffer::defaultFBO().get(), GL_BACK, { 0,0,viewer()->viewportSize().x, viewer()->viewportSize().y }, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+	}
+	else
+	{
+		m_colorTexture->bindActive(0);
+		m_depthTexture->bindActive(1);
+
+		glViewport(0, 0, viewer()->viewportSize().x, viewer()->viewportSize().y);
+		glDepthMask(GL_TRUE);
+
+		m_programDisplay->setUniform("colorTexture", 0);
+		m_programDisplay->setUniform("depthTexture", 1);
+
+		m_vaoQuad->bind();
+		m_programDisplay->use();
+		m_vaoQuad->drawArrays(GL_POINTS, 0, 1);
+		m_programDisplay->release();
+		m_vaoQuad->unbind();
+
+		m_depthTexture->unbindActive(1);
+		m_colorTexture->unbindActive(0);
+
+	}
 
 	// Restore OpenGL state
 	currentState->apply();

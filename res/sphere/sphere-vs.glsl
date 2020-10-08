@@ -109,7 +109,6 @@ void main()
 {
 	vec4 vertexPosition = position;
 
-#define INTERPOLATION
 #ifdef INTERPOLATION
 	vertexPosition.xyz = mix(position.xyz,nextPosition.xyz,animationDelta);
 #endif
