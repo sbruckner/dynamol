@@ -98,60 +98,68 @@ SphereRenderer::SphereRenderer(Viewer* viewer) : Renderer(viewer)
 	m_shaderSourceDefines = StaticStringSource::create("");
 	m_shaderDefines = NamedString::create("/defines.glsl", m_shaderSourceDefines.get());
 
-	m_shaderSourceGlobals = File::create("./res/sphere/globals.glsl");
-	m_shaderGlobals = NamedString::create("/globals.glsl", m_shaderSourceGlobals.get());
+	createShaderProgram("sphere", {
+			{ GL_VERTEX_SHADER,"./res/sphere/sphere-vs.glsl" },
+			{ GL_GEOMETRY_SHADER,"./res/sphere/sphere-gs.glsl" },
+			{ GL_FRAGMENT_SHADER,"./res/sphere/sphere-fs.glsl" },
+		},
+		{ "./res/model/globals.glsl" });
 
-	m_vertexShaderSourceSphere = Shader::sourceFromFile("./res/sphere/sphere-vs.glsl");
-	m_geometryShaderSourceSphere = Shader::sourceFromFile("./res/sphere/sphere-gs.glsl");
-	m_fragmentShaderSourceSphere = Shader::sourceFromFile("./res/sphere/sphere-fs.glsl");
-	m_fragmentShaderSourceSpawn = Shader::sourceFromFile("./res/sphere/spawn-fs.glsl");
-	m_vertexShaderSourceImage = Shader::sourceFromFile("./res/sphere/image-vs.glsl");
-	m_geometryShaderSourceImage = Shader::sourceFromFile("./res/sphere/image-gs.glsl");
-	m_fragmentShaderSourceSurface = Shader::sourceFromFile("./res/sphere/surface-fs.glsl");
-	m_fragmentShaderSourceAOSample = Shader::sourceFromFile("./res/sphere/aosample-fs.glsl");
-	m_fragmentShaderSourceAOBlur = Shader::sourceFromFile("./res/sphere/aoblur-fs.glsl");
-	m_fragmentShaderSourceShade = Shader::sourceFromFile("./res/sphere/shade-fs.glsl");
-	m_fragmentShaderSourceDOFBlur = Shader::sourceFromFile("./res/sphere/dofblur-fs.glsl");
-	m_fragmentShaderSourceDOFBlend = Shader::sourceFromFile("./res/sphere/dofblend-fs.glsl");
-	m_fragmentShaderSourceDisplay = Shader::sourceFromFile("./res/sphere/display-fs.glsl");
+	createShaderProgram("spawn", {
+			{ GL_VERTEX_SHADER,"./res/sphere/sphere-vs.glsl" },
+			{ GL_GEOMETRY_SHADER,"./res/sphere/sphere-gs.glsl" },
+			{ GL_FRAGMENT_SHADER,"./res/sphere/spawn-fs.glsl" },
+		},
+		{ "./res/sphere/globals.glsl" });
 
-	m_vertexShaderTemplateSphere = Shader::applyGlobalReplacements(m_vertexShaderSourceSphere.get());
-	m_geometryShaderTemplateSphere = Shader::applyGlobalReplacements(m_geometryShaderSourceSphere.get());
-	m_fragmentShaderTemplateSphere = Shader::applyGlobalReplacements(m_fragmentShaderSourceSphere.get());
-	m_fragmentShaderTemplateSpawn = Shader::applyGlobalReplacements(m_fragmentShaderSourceSpawn.get());
-	m_vertexShaderTemplateImage = Shader::applyGlobalReplacements(m_vertexShaderSourceImage.get());
-	m_geometryShaderTemplateImage = Shader::applyGlobalReplacements(m_geometryShaderSourceImage.get());
-	m_fragmentShaderTemplateSurface = Shader::applyGlobalReplacements(m_fragmentShaderSourceSurface.get());
-	m_fragmentShaderTemplateAOSample = Shader::applyGlobalReplacements(m_fragmentShaderSourceAOSample.get());
-	m_fragmentShaderTemplateAOBlur = Shader::applyGlobalReplacements(m_fragmentShaderSourceAOBlur.get());
-	m_fragmentShaderTemplateShade = Shader::applyGlobalReplacements(m_fragmentShaderSourceShade.get());
-	m_fragmentShaderTemplateDOFBlur = Shader::applyGlobalReplacements(m_fragmentShaderSourceDOFBlur.get());
-	m_fragmentShaderTemplateDOFBlend = Shader::applyGlobalReplacements(m_fragmentShaderSourceDOFBlend.get());
-	m_fragmentShaderTemplateDisplay = Shader::applyGlobalReplacements(m_fragmentShaderSourceDisplay.get());
+	createShaderProgram("surface", {
+			{ GL_VERTEX_SHADER,"./res/sphere/image-vs.glsl" },
+			{ GL_GEOMETRY_SHADER,"./res/sphere/image-gs.glsl" },
+			{ GL_FRAGMENT_SHADER,"./res/sphere/surface-fs.glsl" },
+		},
+		{ "./res/sphere/globals.glsl" });
 
-	m_vertexShaderSphere = Shader::create(GL_VERTEX_SHADER, m_vertexShaderTemplateSphere.get());
-	m_geometryShaderSphere = Shader::create(GL_GEOMETRY_SHADER, m_geometryShaderTemplateSphere.get());
-	m_fragmentShaderSphere = Shader::create(GL_FRAGMENT_SHADER, m_fragmentShaderTemplateSphere.get());
-	m_fragmentShaderSpawn = Shader::create(GL_FRAGMENT_SHADER, m_fragmentShaderTemplateSpawn.get());
-	m_vertexShaderImage = Shader::create(GL_VERTEX_SHADER, m_vertexShaderTemplateImage.get());
-	m_geometryShaderImage = Shader::create(GL_GEOMETRY_SHADER, m_geometryShaderTemplateImage.get());
-	m_fragmentShaderSurface = Shader::create(GL_FRAGMENT_SHADER, m_fragmentShaderTemplateSurface.get());
-	m_fragmentShaderAOSample = Shader::create(GL_FRAGMENT_SHADER, m_fragmentShaderTemplateAOSample.get());
-	m_fragmentShaderAOBlur = Shader::create(GL_FRAGMENT_SHADER, m_fragmentShaderTemplateAOBlur.get());
-	m_fragmentShaderShade = Shader::create(GL_FRAGMENT_SHADER, m_fragmentShaderTemplateShade.get());
-	m_fragmentShaderDOFBlur = Shader::create(GL_FRAGMENT_SHADER, m_fragmentShaderTemplateDOFBlur.get());
-	m_fragmentShaderDOFBlend = Shader::create(GL_FRAGMENT_SHADER, m_fragmentShaderTemplateDOFBlend.get());
-	m_fragmentShaderDisplay = Shader::create(GL_FRAGMENT_SHADER, m_fragmentShaderTemplateDisplay.get());
+	createShaderProgram("aosample", {
+			{ GL_VERTEX_SHADER,"./res/sphere/image-vs.glsl" },
+			{ GL_GEOMETRY_SHADER,"./res/sphere/image-gs.glsl" },
+			{ GL_FRAGMENT_SHADER,"./res/sphere/aosample-fs.glsl" },
+		},
+		{ "./res/sphere/globals.glsl" });
 
-	m_programSphere->attach(m_vertexShaderSphere.get(), m_geometryShaderSphere.get(), m_fragmentShaderSphere.get());
-	m_programSpawn->attach(m_vertexShaderSphere.get(), m_geometryShaderSphere.get(), m_fragmentShaderSpawn.get());
-	m_programSurface->attach(m_vertexShaderImage.get(), m_geometryShaderImage.get(), m_fragmentShaderSurface.get());
-	m_programAOSample->attach(m_vertexShaderImage.get(), m_geometryShaderImage.get(), m_fragmentShaderAOSample.get());
-	m_programAOBlur->attach(m_vertexShaderImage.get(), m_geometryShaderImage.get(), m_fragmentShaderAOBlur.get());
-	m_programShade->attach(m_vertexShaderImage.get(), m_geometryShaderImage.get(), m_fragmentShaderShade.get());
-	m_programDOFBlur->attach(m_vertexShaderImage.get(), m_geometryShaderImage.get(), m_fragmentShaderDOFBlur.get());
-	m_programDOFBlend->attach(m_vertexShaderImage.get(), m_geometryShaderImage.get(), m_fragmentShaderDOFBlend.get());
-	m_programDisplay->attach(m_vertexShaderImage.get(), m_geometryShaderImage.get(), m_fragmentShaderDisplay.get());
+	createShaderProgram("aoblur", {
+			{ GL_VERTEX_SHADER,"./res/sphere/image-vs.glsl" },
+			{ GL_GEOMETRY_SHADER,"./res/sphere/image-gs.glsl" },
+			{ GL_FRAGMENT_SHADER,"./res/sphere/aoblur-fs.glsl" },
+		},
+		{ "./res/sphere/globals.glsl" });
+
+	createShaderProgram("shade", {
+			{ GL_VERTEX_SHADER,"./res/sphere/image-vs.glsl" },
+			{ GL_GEOMETRY_SHADER,"./res/sphere/image-gs.glsl" },
+			{ GL_FRAGMENT_SHADER,"./res/sphere/shade-fs.glsl" },
+		},
+		{ "./res/sphere/globals.glsl" });
+
+	createShaderProgram("dofblur", {
+			{ GL_VERTEX_SHADER,"./res/sphere/image-vs.glsl" },
+			{ GL_GEOMETRY_SHADER,"./res/sphere/image-gs.glsl" },
+			{ GL_FRAGMENT_SHADER,"./res/sphere/dofblur-fs.glsl" },
+		},
+		{ "./res/sphere/globals.glsl" });
+
+	createShaderProgram("dofblend", {
+			{ GL_VERTEX_SHADER,"./res/sphere/image-vs.glsl" },
+			{ GL_GEOMETRY_SHADER,"./res/sphere/image-gs.glsl" },
+			{ GL_FRAGMENT_SHADER,"./res/sphere/dofblend-fs.glsl" },
+		},
+		{ "./res/sphere/globals.glsl" });
+
+	createShaderProgram("display", {
+			{ GL_VERTEX_SHADER,"./res/sphere/image-vs.glsl" },
+			{ GL_GEOMETRY_SHADER,"./res/sphere/image-gs.glsl" },
+			{ GL_FRAGMENT_SHADER,"./res/sphere/display-fs.glsl" },
+		},
+		{ "./res/sphere/globals.glsl" });
 
 	m_framebufferSize = viewer->viewportSize();
 
@@ -310,26 +318,6 @@ SphereRenderer::SphereRenderer(Viewer* viewer) : Renderer(viewer)
 	m_dofFramebuffer->setDrawBuffers({ GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 });
 }
 
-std::list<globjects::File*> SphereRenderer::shaderFiles() const
-{
-	return std::list<globjects::File*>({
-		m_shaderSourceGlobals.get(),
-		m_vertexShaderSourceSphere.get(),
-		m_geometryShaderSourceSphere.get(),
-		m_fragmentShaderSourceSphere.get(),
-		m_vertexShaderSourceImage.get(),
-		m_geometryShaderSourceImage.get(),
-		m_fragmentShaderSourceSpawn.get(),
-		m_fragmentShaderSourceSurface.get(),
-		m_fragmentShaderSourceAOSample.get(),
-		m_fragmentShaderSourceAOBlur.get(),
-		m_fragmentShaderSourceShade.get(),
-		m_fragmentShaderSourceDOFBlur.get(),
-		m_fragmentShaderSourceDOFBlend.get(),
-		m_fragmentShaderSourceDisplay.get()
-		});
-}
-
 void SphereRenderer::display()
 {
 	if (viewer()->scene()->protein()->atoms().size() == 0)
@@ -358,6 +346,19 @@ void SphereRenderer::display()
 		m_blurTexture->image2D(0, GL_RGBA32F, m_framebufferSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 		m_colorTexture->image2D(0, GL_RGBA32F, m_framebufferSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 	}
+
+	// our shader programs
+
+	auto programSphere = shaderProgram("sphere");
+	auto programSpawn = shaderProgram("spawn");
+	auto programSurface = shaderProgram("surface");
+	auto programAOSample = shaderProgram("aosample");
+	auto programAOBlur = shaderProgram("aoblur");
+	auto programShade = shaderProgram("shade");
+	auto programDOFBlur = shaderProgram("dofblur");
+	auto programDOFBlend = shaderProgram("dofblend");
+	auto programDisplay = shaderProgram("display");
+
 	
 	// get cursor position for magic lens
 	double mouseX, mouseY;
@@ -615,9 +616,7 @@ void SphereRenderer::display()
 	if (defines != m_shaderSourceDefines->string())
 	{
 		m_shaderSourceDefines->setString(defines);
-
-		for (auto& s : shaderFiles())
-			s->reload();
+		reloadShaders();
 	}
 
 	// Vertex binding setup
@@ -649,22 +648,22 @@ void SphereRenderer::display()
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
-	m_programSphere->setUniform("modelViewMatrix", modelViewMatrix);
-	m_programSphere->setUniform("projectionMatrix", projectionMatrix);
-	m_programSphere->setUniform("modelViewProjectionMatrix", modelViewProjectionMatrix);
-	m_programSphere->setUniform("inverseModelViewProjectionMatrix", inverseModelViewProjectionMatrix);
-	m_programSphere->setUniform("radiusScale", 1.0f);
-	m_programSphere->setUniform("clipRadiusScale", radiusScale);
-	m_programSphere->setUniform("nearPlaneZ", nearPlane.z);
-	m_programSphere->setUniform("animationDelta", animationDelta);
-	m_programSphere->setUniform("animationTime", animationTime);
-	m_programSphere->setUniform("animationAmplitude", animationAmplitude);
-	m_programSphere->setUniform("animationFrequency", animationFrequency);
+	programSphere->setUniform("modelViewMatrix", modelViewMatrix);
+	programSphere->setUniform("projectionMatrix", projectionMatrix);
+	programSphere->setUniform("modelViewProjectionMatrix", modelViewProjectionMatrix);
+	programSphere->setUniform("inverseModelViewProjectionMatrix", inverseModelViewProjectionMatrix);
+	programSphere->setUniform("radiusScale", 1.0f);
+	programSphere->setUniform("clipRadiusScale", radiusScale);
+	programSphere->setUniform("nearPlaneZ", nearPlane.z);
+	programSphere->setUniform("animationDelta", animationDelta);
+	programSphere->setUniform("animationTime", animationTime);
+	programSphere->setUniform("animationAmplitude", animationAmplitude);
+	programSphere->setUniform("animationFrequency", animationFrequency);
 
 	m_vao->bind();
-	m_programSphere->use();
+	programSphere->use();
 	m_vao->drawArrays(GL_POINTS, 0, vertexCount);
-	m_programSphere->release();
+	programSphere->release();
 	m_vao->unbind();
 
 
@@ -689,22 +688,22 @@ void SphereRenderer::display()
 	m_residueColors->bindBase(GL_UNIFORM_BUFFER, 1);
 	m_chainColors->bindBase(GL_UNIFORM_BUFFER, 2);
 
-	m_programSpawn->setUniform("modelViewMatrix", modelViewMatrix);
-	m_programSpawn->setUniform("projectionMatrix", projectionMatrix);
-	m_programSpawn->setUniform("modelViewProjectionMatrix", modelViewProjectionMatrix);
-	m_programSpawn->setUniform("inverseModelViewProjectionMatrix", inverseModelViewProjectionMatrix);
-	m_programSpawn->setUniform("radiusScale", radiusScale);
-	m_programSpawn->setUniform("clipRadiusScale", radiusScale);
-	m_programSpawn->setUniform("nearPlaneZ", nearPlane.z);
-	m_programSpawn->setUniform("animationDelta", animationDelta);
-	m_programSpawn->setUniform("animationTime", animationTime);
-	m_programSpawn->setUniform("animationAmplitude", animationAmplitude);
-	m_programSpawn->setUniform("animationFrequency", animationFrequency);
+	programSpawn->setUniform("modelViewMatrix", modelViewMatrix);
+	programSpawn->setUniform("projectionMatrix", projectionMatrix);
+	programSpawn->setUniform("modelViewProjectionMatrix", modelViewProjectionMatrix);
+	programSpawn->setUniform("inverseModelViewProjectionMatrix", inverseModelViewProjectionMatrix);
+	programSpawn->setUniform("radiusScale", radiusScale);
+	programSpawn->setUniform("clipRadiusScale", radiusScale);
+	programSpawn->setUniform("nearPlaneZ", nearPlane.z);
+	programSpawn->setUniform("animationDelta", animationDelta);
+	programSpawn->setUniform("animationTime", animationTime);
+	programSpawn->setUniform("animationAmplitude", animationAmplitude);
+	programSpawn->setUniform("animationFrequency", animationFrequency);
 
 	m_vao->bind();
-	m_programSpawn->use();
+	programSpawn->use();
 	m_vao->drawArrays(GL_POINTS, 0, vertexCount);
-	m_programSpawn->release();
+	programSpawn->release();
 	m_vao->unbind();
 
 
@@ -735,32 +734,32 @@ void SphereRenderer::display()
 	m_intersectionBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 1);
 	m_statisticsBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 2);
 
-	m_programSurface->setUniform("modelViewMatrix", modelViewMatrix);
-	m_programSurface->setUniform("projectionMatrix", projectionMatrix);
-	m_programSurface->setUniform("modelViewProjectionMatrix", modelViewProjectionMatrix);
-	m_programSurface->setUniform("inverseModelViewProjectionMatrix", inverseModelViewProjectionMatrix);
-	m_programSurface->setUniform("normalMatrix", normalMatrix);
-	m_programSurface->setUniform("lightPosition", vec3(worldLightPosition));
-	m_programSurface->setUniform("ambientMaterial", ambientMaterial);
-	m_programSurface->setUniform("diffuseMaterial", diffuseMaterial);
-	m_programSurface->setUniform("specularMaterial", specularMaterial);
-	m_programSurface->setUniform("shininess", shininess);
-	m_programSurface->setUniform("focusPosition", focusPosition);
-	m_programSurface->setUniform("positionTexture", 0);
-	m_programSurface->setUniform("normalTexture", 1);
-	m_programSurface->setUniform("offsetTexture", 3);
-	m_programSurface->setUniform("environmentTexture", 4);
-	m_programSurface->setUniform("bumpTexture", 5);
-	m_programSurface->setUniform("materialTexture", 6);
-	m_programSurface->setUniform("sharpness", sharpness);
-	m_programSurface->setUniform("coloring", uint(coloring));
-	m_programSurface->setUniform("environment", environmentMapping);
-	m_programSurface->setUniform("lens", lens);
+	programSurface->setUniform("modelViewMatrix", modelViewMatrix);
+	programSurface->setUniform("projectionMatrix", projectionMatrix);
+	programSurface->setUniform("modelViewProjectionMatrix", modelViewProjectionMatrix);
+	programSurface->setUniform("inverseModelViewProjectionMatrix", inverseModelViewProjectionMatrix);
+	programSurface->setUniform("normalMatrix", normalMatrix);
+	programSurface->setUniform("lightPosition", vec3(worldLightPosition));
+	programSurface->setUniform("ambientMaterial", ambientMaterial);
+	programSurface->setUniform("diffuseMaterial", diffuseMaterial);
+	programSurface->setUniform("specularMaterial", specularMaterial);
+	programSurface->setUniform("shininess", shininess);
+	programSurface->setUniform("focusPosition", focusPosition);
+	programSurface->setUniform("positionTexture", 0);
+	programSurface->setUniform("normalTexture", 1);
+	programSurface->setUniform("offsetTexture", 3);
+	programSurface->setUniform("environmentTexture", 4);
+	programSurface->setUniform("bumpTexture", 5);
+	programSurface->setUniform("materialTexture", 6);
+	programSurface->setUniform("sharpness", sharpness);
+	programSurface->setUniform("coloring", uint(coloring));
+	programSurface->setUniform("environment", environmentMapping);
+	programSurface->setUniform("lens", lens);
 
 	m_vaoQuad->bind();
-	m_programSurface->use();
+	programSurface->use();
 	m_vaoQuad->drawArrays(GL_POINTS, 0, 1);
-	m_programSurface->release();
+	programSurface->release();
 	m_vaoQuad->unbind();
 
 	m_intersectionBuffer->unbind(GL_SHADER_STORAGE_BUFFER);
@@ -789,17 +788,17 @@ void SphereRenderer::display()
 		//////////////////////////////////////////////////////////////////////////
 		m_aoFramebuffer->bind();
 
-		m_programAOSample->setUniform("projectionInfo", projectionInfo);
-		m_programAOSample->setUniform("projectionScale", projectionScale);
-		m_programAOSample->setUniform("viewLightPosition", viewLightPosition);
-		m_programAOSample->setUniform("surfaceNormalTexture", 0);
+		programAOSample->setUniform("projectionInfo", projectionInfo);
+		programAOSample->setUniform("projectionScale", projectionScale);
+		programAOSample->setUniform("viewLightPosition", viewLightPosition);
+		programAOSample->setUniform("surfaceNormalTexture", 0);
 
 		m_surfaceNormalTexture->bindActive(0);
 
 		m_vaoQuad->bind();
-		m_programAOSample->use();
+		programAOSample->use();
 		m_vaoQuad->drawArrays(GL_POINTS, 0, 1);
-		m_programAOSample->release();
+		programAOSample->release();
 		m_vaoQuad->unbind();
 
 		m_aoFramebuffer->unbind();
@@ -809,16 +808,16 @@ void SphereRenderer::display()
 		// Ambient occlusion blurring -- horizontal
 		//////////////////////////////////////////////////////////////////////////
 		m_aoBlurFramebuffer->bind();
-		m_programAOBlur->setUniform("normalTexture", 0);
-		m_programAOBlur->setUniform("ambientTexture", 1);
-		m_programAOBlur->setUniform("offset", vec2(1.0f / float(viewportSize.x), 0.0f));
+		programAOBlur->setUniform("normalTexture", 0);
+		programAOBlur->setUniform("ambientTexture", 1);
+		programAOBlur->setUniform("offset", vec2(1.0f / float(viewportSize.x), 0.0f));
 
 		m_ambientTexture->bindActive(1);
 
 		m_vaoQuad->bind();
-		m_programAOBlur->use();
+		programAOBlur->use();
 		m_vaoQuad->drawArrays(GL_POINTS, 0, 1);
-		m_programAOBlur->release();
+		programAOBlur->release();
 		m_vaoQuad->unbind();
 
 		m_ambientTexture->unbindActive(1);
@@ -830,14 +829,14 @@ void SphereRenderer::display()
 		//////////////////////////////////////////////////////////////////////////
 		m_aoFramebuffer->bind();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		m_programAOBlur->setUniform("offset", vec2(0.0f, 1.0f / float(viewportSize.y)));
+		programAOBlur->setUniform("offset", vec2(0.0f, 1.0f / float(viewportSize.y)));
 
 		m_blurTexture->bindActive(1);
 
 		m_vaoQuad->bind();
-		m_programAOBlur->use();
+		programAOBlur->use();
 		m_vaoQuad->drawArrays(GL_POINTS, 0, 1);
-		m_programAOBlur->release();
+		programAOBlur->release();
 		m_vaoQuad->unbind();
 
 		m_blurTexture->unbindActive(1);
@@ -863,46 +862,46 @@ void SphereRenderer::display()
 	m_materialTextures[materialTextureIndex]->bindActive(8);
 	m_environmentTextures[environmentTextureIndex]->bindActive(9);
 
-	m_programShade->setUniform("modelViewMatrix", modelViewMatrix);
-	m_programShade->setUniform("projectionMatrix", projectionMatrix);
-	m_programShade->setUniform("modelViewProjection", modelViewProjectionMatrix);
-	m_programShade->setUniform("inverseModelViewProjectionMatrix", inverseModelViewProjectionMatrix);
-	m_programShade->setUniform("normalMatrix", normalMatrix);
-	m_programShade->setUniform("inverseNormalMatrix", inverseNormalMatrix);
-	m_programShade->setUniform("lightPosition", vec3(worldLightPosition));
-	m_programShade->setUniform("ambientMaterial", ambientMaterial);
-	m_programShade->setUniform("diffuseMaterial", diffuseMaterial);
-	m_programShade->setUniform("specularMaterial", specularMaterial);
-	m_programShade->setUniform("distanceBlending", distanceBlending);
-	m_programShade->setUniform("distanceScale", distanceScale);
-	m_programShade->setUniform("shininess", shininess);
-	m_programShade->setUniform("focusPosition", focusPosition);
+	programShade->setUniform("modelViewMatrix", modelViewMatrix);
+	programShade->setUniform("projectionMatrix", projectionMatrix);
+	programShade->setUniform("modelViewProjection", modelViewProjectionMatrix);
+	programShade->setUniform("inverseModelViewProjectionMatrix", inverseModelViewProjectionMatrix);
+	programShade->setUniform("normalMatrix", normalMatrix);
+	programShade->setUniform("inverseNormalMatrix", inverseNormalMatrix);
+	programShade->setUniform("lightPosition", vec3(worldLightPosition));
+	programShade->setUniform("ambientMaterial", ambientMaterial);
+	programShade->setUniform("diffuseMaterial", diffuseMaterial);
+	programShade->setUniform("specularMaterial", specularMaterial);
+	programShade->setUniform("distanceBlending", distanceBlending);
+	programShade->setUniform("distanceScale", distanceScale);
+	programShade->setUniform("shininess", shininess);
+	programShade->setUniform("focusPosition", focusPosition);
 
-	m_programShade->setUniform("spherePositionTexture", 0);
-	m_programShade->setUniform("sphereNormalTexture", 1);
-	m_programShade->setUniform("sphereDiffuseTexture", 2);
+	programShade->setUniform("spherePositionTexture", 0);
+	programShade->setUniform("sphereNormalTexture", 1);
+	programShade->setUniform("sphereDiffuseTexture", 2);
 
-	m_programShade->setUniform("surfacePositionTexture", 3);
-	m_programShade->setUniform("surfaceNormalTexture", 4);
-	m_programShade->setUniform("surfaceDiffuseTexture", 5);
+	programShade->setUniform("surfacePositionTexture", 3);
+	programShade->setUniform("surfaceNormalTexture", 4);
+	programShade->setUniform("surfaceDiffuseTexture", 5);
 
-	m_programShade->setUniform("depthTexture", 6);
-	m_programShade->setUniform("ambientTexture", 7);
-	m_programShade->setUniform("materialTexture", 8);
-	m_programShade->setUniform("environmentTexture", 9);
+	programShade->setUniform("depthTexture", 6);
+	programShade->setUniform("ambientTexture", 7);
+	programShade->setUniform("materialTexture", 8);
+	programShade->setUniform("environmentTexture", 9);
 
-	m_programShade->setUniform("environment", environmentMapping);
-	m_programShade->setUniform("maximumCoCRadius", maximumCoCRadius);
-	m_programShade->setUniform("aparture", aparture);
-	m_programShade->setUniform("focalDistance", focalDistance);
-	m_programShade->setUniform("focalLength", focalLength);
-	m_programShade->setUniform("backgroundColor", viewer()->backgroundColor());
+	programShade->setUniform("environment", environmentMapping);
+	programShade->setUniform("maximumCoCRadius", maximumCoCRadius);
+	programShade->setUniform("aparture", aparture);
+	programShade->setUniform("focalDistance", focalDistance);
+	programShade->setUniform("focalLength", focalLength);
+	programShade->setUniform("backgroundColor", viewer()->backgroundColor());
 
 
 	m_vaoQuad->bind();
-	m_programShade->use();
+	programShade->use();
 	m_vaoQuad->drawArrays(GL_POINTS, 0, 1);
-	m_programShade->release();
+	programShade->release();
 	m_vaoQuad->unbind();
 
 	m_environmentTextures[environmentTextureIndex]->unbindActive(9);
@@ -932,22 +931,22 @@ void SphereRenderer::display()
 		m_colorTexture->bindActive(0);
 		m_colorTexture->bindActive(1);
 
-		m_programDOFBlur->setUniform("maximumCoCRadius", maximumCoCRadius);
-		m_programDOFBlur->setUniform("aparture", aparture);
-		m_programDOFBlur->setUniform("focalDistance", focalDistance);
-		m_programDOFBlur->setUniform("focalLength", focalLength);
+		programDOFBlur->setUniform("maximumCoCRadius", maximumCoCRadius);
+		programDOFBlur->setUniform("aparture", aparture);
+		programDOFBlur->setUniform("focalDistance", focalDistance);
+		programDOFBlur->setUniform("focalLength", focalLength);
 
-		m_programDOFBlur->setUniform("uMaxCoCRadiusPixels", (int)round(maximumCoCRadius));
-		m_programDOFBlur->setUniform("uNearBlurRadiusPixels", (int)round(maximumCoCRadius));
-		m_programDOFBlur->setUniform("uInvNearBlurRadiusPixels", 1.0f / maximumCoCRadius);
-		m_programDOFBlur->setUniform("horizontal", true);
-		m_programDOFBlur->setUniform("nearTexture", 0);
-		m_programDOFBlur->setUniform("blurTexture", 1);
+		programDOFBlur->setUniform("uMaxCoCRadiusPixels", (int)round(maximumCoCRadius));
+		programDOFBlur->setUniform("uNearBlurRadiusPixels", (int)round(maximumCoCRadius));
+		programDOFBlur->setUniform("uInvNearBlurRadiusPixels", 1.0f / maximumCoCRadius);
+		programDOFBlur->setUniform("horizontal", true);
+		programDOFBlur->setUniform("nearTexture", 0);
+		programDOFBlur->setUniform("blurTexture", 1);
 
 		m_vaoQuad->bind();
-		m_programDOFBlur->use();
+		programDOFBlur->use();
 		m_vaoQuad->drawArrays(GL_POINTS, 0, 1);
-		m_programDOFBlur->release();
+		programDOFBlur->release();
 		m_vaoQuad->unbind();
 
 		m_colorTexture->unbindActive(1);
@@ -962,14 +961,14 @@ void SphereRenderer::display()
 
 		m_sphereNormalTexture->bindActive(0);
 		m_surfaceNormalTexture->bindActive(1);
-		m_programDOFBlur->setUniform("horizontal", false);
-		m_programDOFBlur->setUniform("nearTexture", 0);
-		m_programDOFBlur->setUniform("blurTexture", 1);
+		programDOFBlur->setUniform("horizontal", false);
+		programDOFBlur->setUniform("nearTexture", 0);
+		programDOFBlur->setUniform("blurTexture", 1);
 
 		m_vaoQuad->bind();
-		m_programDOFBlur->use();
+		programDOFBlur->use();
 		m_vaoQuad->drawArrays(GL_POINTS, 0, 1);
-		m_programDOFBlur->release();
+		programDOFBlur->release();
 		m_vaoQuad->unbind();
 
 		m_surfaceNormalTexture->unbindActive(1);
@@ -987,19 +986,19 @@ void SphereRenderer::display()
 		m_sphereDiffuseTexture->bindActive(1);
 		m_surfaceDiffuseTexture->bindActive(2);
 
-		m_programDOFBlend->setUniform("maximumCoCRadius", maximumCoCRadius);
-		m_programDOFBlend->setUniform("aparture", aparture);
-		m_programDOFBlend->setUniform("focalDistance", focalDistance);
-		m_programDOFBlend->setUniform("focalLength", focalLength);
+		programDOFBlend->setUniform("maximumCoCRadius", maximumCoCRadius);
+		programDOFBlend->setUniform("aparture", aparture);
+		programDOFBlend->setUniform("focalDistance", focalDistance);
+		programDOFBlend->setUniform("focalLength", focalLength);
 
-		m_programDOFBlend->setUniform("colorTexture", 0);
-		m_programDOFBlend->setUniform("nearTexture", 1);
-		m_programDOFBlend->setUniform("blurTexture", 2);
+		programDOFBlend->setUniform("colorTexture", 0);
+		programDOFBlend->setUniform("nearTexture", 1);
+		programDOFBlend->setUniform("blurTexture", 2);
 
 		m_vaoQuad->bind();
-		m_programDOFBlend->use();
+		programDOFBlend->use();
 		m_vaoQuad->drawArrays(GL_POINTS, 0, 1);
-		m_programDOFBlend->release();
+		programDOFBlend->release();
 		m_vaoQuad->unbind();
 
 		m_surfaceDiffuseTexture->unbindActive(1);
@@ -1020,13 +1019,13 @@ void SphereRenderer::display()
 		glViewport(0, 0, viewer()->viewportSize().x, viewer()->viewportSize().y);
 		glDepthMask(GL_TRUE);
 
-		m_programDisplay->setUniform("colorTexture", 0);
-		m_programDisplay->setUniform("depthTexture", 1);
+		programDisplay->setUniform("colorTexture", 0);
+		programDisplay->setUniform("depthTexture", 1);
 
 		m_vaoQuad->bind();
-		m_programDisplay->use();
+		programDisplay->use();
 		m_vaoQuad->drawArrays(GL_POINTS, 0, 1);
-		m_programDisplay->release();
+		programDisplay->release();
 		m_vaoQuad->unbind();
 
 		m_depthTexture->unbindActive(1);

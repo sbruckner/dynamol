@@ -226,14 +226,8 @@ void Viewer::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 		{
 			for (auto& r : viewer->m_renderers)
 			{
-				std::cout << "Reloading shaders for instance of " << typeid(*r.get()).name() << " ... " << std::endl;
-
-				for (auto& s : r->shaderFiles())
-				{
-					std::cout << "  " << s->shortInfo() << std::endl;
-					s->reload();
-				}
-				std::cout << r->shaderFiles().size() << " shaders reloaded." << std::endl << std::endl;
+				globjects::debug() << "Reloading shaders for instance of " << typeid(*r.get()).name() << " ... ";
+				r->reloadShaders();
 			}
 		}
 		else if (key == GLFW_KEY_F2 && action == GLFW_RELEASE)
