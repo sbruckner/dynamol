@@ -43,13 +43,14 @@ Under Windows, after opening a command prompt and running these three scripts fr
 ./copy-libs.cmd
 ```
 
-On other platforms, as Dear ImGui, stb, and tinyfiledialogs do not use CMake, place them as subfolders of the ```./lib``` folder (using the folder names ```imgui```, ```stb```, and ```tinyfd```):
+On other platforms, as glm, Dear ImGui, stb, and tinyfiledialogs do not use CMake, place them as subfolders of the ```./lib``` folder (using the folder names  ```glm```, ```imgui```, ```stb```, and ```tinyfd```):
 
 ```
 cd lib
+git clone https://github.com/g-truc/glm.git
 git clone https://github.com/ocornut/imgui.git  
-git clone https://github.com/lvandeve/lodepng.git
 git clone http://git.code.sf.net/p/tinyfiledialogs/code tinyfd
+git clone https://github.com/nothings/stb.git
 cd ..
 ```
 
@@ -88,6 +89,11 @@ As mentioned above, the program requires that the current working directory is s
 ## Usage
 
 After starting the program, a file dialog will pop up and ask you for a Protein Data Bank (PDB) file (see https://www.rcsb.org/). An example file called is located in the ```./dat``` folder. Some basic usage instructions are displayed in the console window.
+
+## Ports
+
+An experimental web version which uses WebGL 2 Compute (see https://www.khronos.org/registry/webgl/specs/latest/2.0-compute/) is available at https://github.com/sbruckner/dynamol-web
+Please let me know about any other ports (see https://vis.uib.no/team/bruckner/ for contact information)
 
 ## Acknowledgments
 
