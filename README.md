@@ -26,7 +26,7 @@ The project uses [CMake](https://cmake.org/) and relies on the following librari
 - [glbinding](https://github.com/cginternals/glbinding) 3.1.0 or higher (https://github.com/cginternals/glbinding.git) for OpenGL API binding
 - [globjects](https://github.com/cginternals/globjects) 2.0.0 or higher (https://github.com/cginternals/globjects.git) for additional OpenGL wrapping
 - [Dear ImGui](https://github.com/ocornut/imgui) 1.71 or higher (https://github.com/ocornut/imgui.git) for GUI elements
-- [lodePNG](https://lodev.org/lodepng/) 20190615 or higher (https://github.com/lvandeve/lodepng.git) for PNG loading and saving
+- [stb](https://github.com/nothings/stb) 2.26 or higher (https://github.com/nothings/stb.git) for PNG loading and saving
 - [tinyfiledialogs](https://sourceforge.net/projects/tinyfiledialogs/) 3.3.9 or higher (https://git.code.sf.net/p/tinyfiledialogs/code) for dialog functionality
 
 The release package includes all these libraries in compiled form (where applicable), so if you are using it you can skip the remainder of the section. If you want or need to compile the dependencies yourself, on Windows we provide a set of batch scripts to simplify the process of retrieving and building them. These scripts require that the Git and CMake executables properly set up and in your system path.
@@ -43,7 +43,7 @@ Under Windows, after opening a command prompt and running these three scripts fr
 ./copy-libs.cmd
 ```
 
-On other platforms, as Dear ImGui, lodePNG, and tinyfiledialogs do not use CMake, place them as subfolders of the ```./lib``` folder (using the folder names ```imgui```, ```lodepng```, and ```tinyfd```):
+On other platforms, as Dear ImGui, stb, and tinyfiledialogs do not use CMake, place them as subfolders of the ```./lib``` folder (using the folder names ```imgui```, ```stb```, and ```tinyfd```):
 
 ```
 cd lib
@@ -57,7 +57,7 @@ The other libraries use CMake, so just follow their respective instructions and 
 
 ## Building
 
-If you are using Visual Studio 2019, you can use its integrated CMake support to build and run the project. When running the program from within the IDE, make sure so select "dynamol.exe" as the Startup Item. This will make sure that the current working directory is set to the project root (see the ```./.vs/launch.vs.json file```), so that all resources can be found by the executable.
+If you are using Visual Studio 2019, you can use its integrated CMake support to build and run the project. When running the program from within the IDE, make sure to set the current working directory to the project root folder, otherwise the executable will not be able to find all necessary resources. This can be achieved by editing the debug and lauch settings for dynamol.exe (see the ```./.vs/launch.vs.json file```) and addting the entry  ```"currentDir": "${projectDir}" ```.
 
 When instead building from the command line, run the following commands from the project root folder:
 

@@ -31,8 +31,8 @@ using namespace glm;
 using namespace globjects;
 
 #define IMGUI_IMPL_OPENGL_LOADER_CUSTOM <glbinding/gl/gl.h>
-#include <examples/imgui_impl_opengl3.cpp>
-#include <examples/imgui_impl_glfw.cpp>
+#include <backends/imgui_impl_opengl3.cpp>
+#include <backends/imgui_impl_glfw.cpp>
 
 
 Viewer::Viewer(GLFWwindow *window, Scene *scene) : m_window(window), m_scene(scene)
