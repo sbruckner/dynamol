@@ -119,7 +119,12 @@ void main()
 	vec4 surfaceDiffuse = texelFetch(surfaceDiffuseTexture,ivec2(gl_FragCoord.xy),0);
 
 	vec3 directLight = vec3(1.0);
+
+	if (surfacePosition.w >= 65535.0)	
+		surfaceDiffuse.a = 0.0;
 	
+	// experimental: ground place (disabled for now)
+	/*
 	{
 
 		vec3 planeNormal = vec3(0.0,1.0,0.0);
@@ -136,7 +141,7 @@ void main()
 		vec2 ddxXZ = dFdx( gridCoords ); 
         vec2 ddyXZ = dFdy( gridCoords); 
 
-		if (surfacePosition.w >= 65535.0)// && length(planeIntersection.xyz-planePosition.xyz) < 4096.0)
+		if (surfacePosition.w >= 65535.0)
 		{
 			surfaceDiffuse.a = 0.0;
 
@@ -154,9 +159,6 @@ void main()
 					surfacePosition = planeIntersection;
 					surfaceNormal.xyz =  normalize(normalMatrix*planeNormal);
 				
-					//float shadowSample = texture(shadowDepthTexture, lightSpaceCoordinates).r;
-	
-					//if (lightSpacePosition.z > shadowSample + 0.001)
 					const int kernelSize = 2;
 					const float kernelNormalization = float(kernelSize * 2 + 1) * float(kernelSize * 2 + 1);
 
@@ -166,10 +168,7 @@ void main()
 					{
 						for (int yOffset = -kernelSize; yOffset <= kernelSize; ++yOffset)
 						{
-							//int xOffset = 0;
-							//int yOffset = 0;
 							shadowValue += textureOffset(shadowColorTexture, lightSpaceCoordinates,ivec2(xOffset,yOffset)).r;
-							//shadowValue += texture(shadowColorTexture, lightSpaceCoordinates+vec2(xOffset/512.0,yOffset/512.0)).r;
 						}
 					}
 
@@ -180,24 +179,13 @@ void main()
 					float centerDistance = length(planePosition.xyz-planeIntersection.xyz);
 					surfaceDiffuse.a =exp(-centerDistance/(4.0*objectRadius));
 
-					/*
-					vec2 gridSize = vec2(32.0,32.0);
-					
-					float gridX = mod(planeIntersection.x,gridSize.x);
-					float gridY = mod(planeIntersection.z,gridSize.y);
-					float grid = 1.0-(1.0-cubicPulse(0.5*gridSize.x,1.5*fw.x,gridX))*(1.0-cubicPulse(0.5*gridSize.y,1.5*fw.z,gridY));
-					float fd = min(1.0,1.0/max(fw.x,fw.z));
-					*/
-
-					//float gridValue = 0.5+0.5*filteredGrid(gridCoords,ddxXZ,ddyXZ);//checkersGradTriangle(gridCoords,ddxXZ,ddyXZ);
 					float gridValue = 0.5+0.5*checkersGradTriangle(gridCoords,ddxXZ,ddyXZ);
 					surfaceDiffuse.rgb = vec3(gridValue);
-
 				}				
 			}
 		}
 	}
-
+	*/
 	vec4 background = vec4(backgroundColor,1.0);
 
 #ifdef ENVIRONMENT
@@ -274,12 +262,15 @@ void main()
 
 	final.a = coc;
 #endif
-		
+
+	// experimental: debug shadow map output
+	/*		
 	if (fragCoord.x < -0.75 && fragCoord.y < -0.75)
 	{
 		vec4 value = texture(shadowColorTexture,(fragCoord.xy+vec2(1.0))/0.25);
 		final = vec4(value.xyz,1.0);
 	}
+	*/
 
 	fragColor = final; 
 }
