@@ -57,6 +57,8 @@ namespace dynamol
 		std::unique_ptr<globjects::Texture> m_ambientTexture = nullptr;
 		std::unique_ptr<globjects::Texture> m_blurTexture = nullptr;
 		std::unique_ptr<globjects::Texture> m_colorTexture = nullptr;
+		std::unique_ptr<globjects::Texture> m_shadowColorTexture = nullptr;
+		std::unique_ptr<globjects::Texture> m_shadowDepthTexture = nullptr;
 
 		std::unique_ptr<globjects::Framebuffer> m_sphereFramebuffer = nullptr;
 		std::unique_ptr<globjects::Framebuffer> m_surfaceFramebuffer = nullptr;
@@ -66,12 +68,13 @@ namespace dynamol
 		std::unique_ptr<globjects::Framebuffer> m_aoBlurFramebuffer = nullptr;
 		std::unique_ptr<globjects::Framebuffer> m_dofFramebuffer = nullptr;
 		std::unique_ptr<globjects::Framebuffer> m_dofBlurFramebuffer = nullptr;
-
+		std::unique_ptr<globjects::Framebuffer> m_shadowFramebuffer = nullptr;
 
 		std::vector< std::unique_ptr<globjects::Texture> > m_environmentTextures;
 		std::vector< std::unique_ptr<globjects::Texture> > m_materialTextures;
 		std::vector< std::unique_ptr<globjects::Texture> > m_bumpTextures;
 
+		glm::ivec2 m_shadowMapSize = glm::ivec2(512, 512);
 		glm::ivec2 m_framebufferSize;
 	};
 

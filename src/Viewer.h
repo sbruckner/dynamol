@@ -65,7 +65,7 @@ namespace dynamol
 		std::vector<std::unique_ptr<Interactor>> m_interactors;
 		std::vector<std::unique_ptr<Renderer>> m_renderers;
 
-		glm::vec3 m_backgroundColor = glm::vec3(0.0f, 0.0f, 0.0f);
+		glm::vec3 m_backgroundColor = glm::vec3(0.2f, 0.2f, 0.2f);
 		glm::mat4 m_modelTransform = glm::mat4(1.0f);
 		glm::mat4 m_viewTransform = glm::mat4(1.0f);
 		glm::mat4 m_lightTransform = glm::mat4(1.0f);

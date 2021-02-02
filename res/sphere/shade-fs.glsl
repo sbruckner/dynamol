@@ -10,6 +10,8 @@ uniform mat4 modelViewProjectionMatrix;
 uniform mat4 inverseModelViewProjectionMatrix;
 uniform mat3 normalMatrix;
 uniform mat3 inverseNormalMatrix;
+uniform mat4 modelLightMatrix;
+uniform mat4 modelLightProjectionMatrix;
 
 uniform vec3 lightPosition;
 uniform vec3 diffuseMaterial;
@@ -28,6 +30,8 @@ uniform sampler2D depthTexture;
 uniform sampler2D ambientTexture;
 uniform sampler2D materialTexture;
 uniform sampler2D environmentTexture;
+uniform sampler2D shadowColorTexture;
+uniform sampler2D shadowDepthTexture;
 uniform bool environment;
 
 uniform float maximumCoCRadius = 0.0;
@@ -37,6 +41,9 @@ uniform float focalLength = 0.0;
 
 uniform float distanceBlending = 0.0;
 uniform float distanceScale = 1.0;
+
+uniform vec3 objectCenter;
+uniform float objectRadius;
 
 in vec4 gFragmentPosition;
 out vec4 fragColor;
@@ -53,6 +60,41 @@ vec2 latlong(vec3 v)
 vec4 over(vec4 vecF, vec4 vecB)
 {
 	return vecF + (1.0-vecF.a)*vecB;
+}
+
+// from https://www.iquilezles.org/www/articles/functions/functions.htm
+float cubicPulse( float c, float w, float x )
+{
+    x = abs(x - c);
+    if( x>w ) return 0.0;
+    x /= w;
+    return 1.0 - x*x*(3.0-2.0*x);
+}
+
+// from https://www.iquilezles.org/www/articles/filterableprocedurals/filterableprocedurals.htm
+float filteredGrid( in vec2 p, in vec2 dpdx, in vec2 dpdy )
+{
+    const float N = 32.0;
+    vec2 w = max(abs(dpdx), abs(dpdy));
+    vec2 a = p + 0.5*w;                        
+    vec2 b = p - 0.5*w;           
+    vec2 i = (floor(a)+min(fract(a)*N,1.0)-
+              floor(b)-min(fract(b)*N,1.0))/(N*w);
+    return (1.0-i.x)*(1.0-i.y);
+}
+
+// https://www.iquilezles.org/www/articles/morecheckerfiltering/morecheckerfiltering.htm
+vec2 p( in vec2 x )
+{
+    vec2 h = fract(x/2.0)-0.5;
+    return x*0.5 + h*(1.0-2.0*abs(h));
+}
+
+float checkersGradTriangle( in vec2 uv, in vec2 ddx, in vec2 ddy )
+{
+    vec2 w = max(abs(ddx), abs(ddy)) + 0.01;    // filter kernel
+    vec2 i = (p(uv+w)-2.0*p(uv)+p(uv-w))/(w*w); // analytical integral (triangle filter)
+    return 0.5 - 0.5*i.x*i.y;                   // xor pattern
 }
 
 void main()
@@ -75,9 +117,86 @@ void main()
 	vec4 surfacePosition = texelFetch(surfacePositionTexture,ivec2(gl_FragCoord.xy),0);
 	vec4 surfaceNormal = texelFetch(surfaceNormalTexture,ivec2(gl_FragCoord.xy),0);
 	vec4 surfaceDiffuse = texelFetch(surfaceDiffuseTexture,ivec2(gl_FragCoord.xy),0);
+
+	vec3 directLight = vec3(1.0);
 	
-	if (surfacePosition.w >= 65535.0)	
-		surfaceDiffuse.a = 0.0;
+	{
+
+		vec3 planeNormal = vec3(0.0,1.0,0.0);
+		vec3 planePosition = objectCenter-vec3(0.0,objectRadius,0.0);
+
+		float denom = dot(planeNormal,V);
+		float t = dot(planePosition-near.xyz,planeNormal)/denom;
+
+		vec4 planeIntersection;
+		planeIntersection.xyz = near.xyz+t*V;
+		planeIntersection.w = length(planeIntersection.xyz-near.xyz);
+
+		vec2 gridCoords = planeIntersection.xz/32.0;
+		vec2 ddxXZ = dFdx( gridCoords ); 
+        vec2 ddyXZ = dFdy( gridCoords); 
+
+		if (surfacePosition.w >= 65535.0)// && length(planeIntersection.xyz-planePosition.xyz) < 4096.0)
+		{
+			surfaceDiffuse.a = 0.0;
+
+			if (abs(denom) > 0.00001)
+			{
+				if (t >= 0.0)
+				{
+					vec4 lightSpacePosition = modelLightProjectionMatrix * vec4(planeIntersection.xyz, 1.0);
+					lightSpacePosition /= lightSpacePosition.w;
+					lightSpacePosition.xyz *= 0.5;
+					lightSpacePosition.xyz += 0.5;
+					vec2 lightSpaceCoordinates = lightSpacePosition.xy;
+
+
+					surfacePosition = planeIntersection;
+					surfaceNormal.xyz =  normalize(normalMatrix*planeNormal);
+				
+					//float shadowSample = texture(shadowDepthTexture, lightSpaceCoordinates).r;
+	
+					//if (lightSpacePosition.z > shadowSample + 0.001)
+					const int kernelSize = 2;
+					const float kernelNormalization = float(kernelSize * 2 + 1) * float(kernelSize * 2 + 1);
+
+					float shadowValue = 0.0;
+
+					for (int xOffset = -kernelSize; xOffset <= kernelSize; ++xOffset)
+					{
+						for (int yOffset = -kernelSize; yOffset <= kernelSize; ++yOffset)
+						{
+							//int xOffset = 0;
+							//int yOffset = 0;
+							shadowValue += textureOffset(shadowColorTexture, lightSpaceCoordinates,ivec2(xOffset,yOffset)).r;
+							//shadowValue += texture(shadowColorTexture, lightSpaceCoordinates+vec2(xOffset/512.0,yOffset/512.0)).r;
+						}
+					}
+
+					shadowValue /= kernelNormalization;
+   					float lightValue = clamp(1.0-shadowValue,0.0,1.0);
+					directLight = vec3(lightValue);
+
+					float centerDistance = length(planePosition.xyz-planeIntersection.xyz);
+					surfaceDiffuse.a =exp(-centerDistance/(4.0*objectRadius));
+
+					/*
+					vec2 gridSize = vec2(32.0,32.0);
+					
+					float gridX = mod(planeIntersection.x,gridSize.x);
+					float gridY = mod(planeIntersection.z,gridSize.y);
+					float grid = 1.0-(1.0-cubicPulse(0.5*gridSize.x,1.5*fw.x,gridX))*(1.0-cubicPulse(0.5*gridSize.y,1.5*fw.z,gridY));
+					float fd = min(1.0,1.0/max(fw.x,fw.z));
+					*/
+
+					//float gridValue = 0.5+0.5*filteredGrid(gridCoords,ddxXZ,ddyXZ);//checkersGradTriangle(gridCoords,ddxXZ,ddyXZ);
+					float gridValue = 0.5+0.5*checkersGradTriangle(gridCoords,ddxXZ,ddyXZ);
+					surfaceDiffuse.rgb = vec3(gridValue);
+
+				}				
+			}
+		}
+	}
 
 	vec4 background = vec4(backgroundColor,1.0);
 
@@ -129,11 +248,11 @@ void main()
 	vec3 diffuseEnvironmentColor = textureLod(environmentTexture, latlong(N.xyz),32.0).rgb;
 	vec3 specularEnvironmentColor = textureLod(environmentTexture, latlong(R.xyz),mipLevel).rgb;
 
-	color = ambientColor + light_occlusion * (NdotL * diffuseColor * diffuseEnvironmentColor + specularEnvironmentColor * specularColor + pow(RdotV,shininess) * specularEnvironmentColor * specularColor);
+	color = ambientColor + (ambientColor+directLight) * light_occlusion * (NdotL * diffuseColor * diffuseEnvironmentColor + specularEnvironmentColor * specularColor + pow(RdotV,shininess) * specularEnvironmentColor * specularColor);
 
 #else
 	
-	color = ambientColor + light_occlusion * (NdotL * diffuseColor + pow(RdotV,shininess) * specularColor );
+	color = ambientColor + (ambientColor+directLight) * light_occlusion * (NdotL * diffuseColor + pow(RdotV,shininess) * specularColor );
 
 #endif
 
@@ -155,6 +274,12 @@ void main()
 
 	final.a = coc;
 #endif
+		
+	if (fragCoord.x < -0.75 && fragCoord.y < -0.75)
+	{
+		vec4 value = texture(shadowColorTexture,(fragCoord.xy+vec2(1.0))/0.25);
+		final = vec4(value.xyz,1.0);
+	}
 
 	fragColor = final; 
 }

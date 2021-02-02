@@ -158,8 +158,12 @@ void CameraInteractor::cursorPosEvent(double xpos, double ypos)
 		vec3 v = arcballVector(m_xCurrent, m_yCurrent);
 		mat4 viewTransform = viewer()->viewTransform();
 
-		mat4 lightTransform = inverse(viewTransform)*translate(mat4(1.0f), -0.5f*v*m_distance)*viewTransform;
-		viewer()->setLightTransform(lightTransform);
+		vec4 l = inverse(viewTransform) * vec4(v, 0.0);
+
+		viewer()->setLightTransform(lookAt(vec3(l)*m_distance*0.5f, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f)));
+
+		//mat4 lightTransform = inverse(viewTransform)*viewer()->lightTransform()translate(mat4(1.0f), -0.5f*v*m_distance)*viewTransform;
+		//viewer()->setLightTransform(lightTransform);
 	}
 
 	if (m_rotating)
@@ -325,7 +329,8 @@ void CameraInteractor::resetProjectionTransform()
 void CameraInteractor::resetViewTransform()
 {
 	viewer()->setViewTransform(lookAt(vec3(0.0f, 0.0f, -m_distance), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f)));
-	viewer()->setLightTransform(lookAt(vec3(0.0f, 0.0f, -0.5f*m_distance), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f)));
+	//viewer()->setLightTransform(lookAt(vec3(m_distance, m_distance, -m_distance), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f)));
+	viewer()->setLightTransform(lookAt(vec3(m_distance, m_distance, -m_distance), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f)));
 }
 
 vec3 CameraInteractor::arcballVector(double x, double y)

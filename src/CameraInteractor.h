@@ -27,9 +27,9 @@ namespace dynamol
 		float m_fov = glm::radians(60.0f);
 		float m_near = 0.125f;
 		float m_far = 32768.0f;
-		float m_distance = 2.0f*sqrt(3.0f);
+		float m_distance = 3.0f*sqrt(3.0f);
 		bool m_perspective = true;
-		bool m_headlight = true;
+		bool m_headlight = false;
 
 		bool m_light = false;
 		bool m_rotating = false;
