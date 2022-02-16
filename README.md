@@ -13,10 +13,6 @@ We provide the full source code of the method that was used to generate the resu
 
 DynaMol was developed under Windows using Microsoft Visual Studio 2022. It uses [CMake](https://cmake.org/) as its build system and does not contain anything else platform-specific, so it should in principle work using other compilers and operating systems, but this has not been tested. Should there be any issues, we are grateful for any input that helps us make the software work on as many platforms as possible.
 
-The easiest way to get started is to use our release package which, in addition to the source code, contains all prebuilt dependencies and binaries for Windows and Visual Studio 2019 (64-Bit). It is available here:
-
-https://github.com/sbruckner/dynamol/releases
-
 ## Prerequisites
 
 The project uses [CMake](https://cmake.org/) and relies on the following libraries: 
@@ -29,7 +25,7 @@ The project uses [CMake](https://cmake.org/) and relies on the following librari
 - [stb](https://github.com/nothings/stb) 2.26 or higher (https://github.com/nothings/stb.git) for PNG loading and saving
 - [tinyfiledialogs](https://sourceforge.net/projects/tinyfiledialogs/) 3.3.9 or higher (https://git.code.sf.net/p/tinyfiledialogs/code) for dialog functionality
 
-The project uses vcpkg(https://vcpkg.io) for dependency management, so this should take care of everything.
+The project uses vcpkg (https://vcpkg.io) for dependency management, so this should take care of everything. There is a manifest file callsed ```vcpkg.json``` in the project root. When building with CMake for the first time, all dependencies should be installed automatically.
 
 ## Building
 
@@ -59,7 +55,11 @@ After building, the executables will be available in the ```./bin``` folder.
 
 ## Running
 
-As mentioned above, the program requires that the current working directory is set to the project root folder.
+To correctly locate shaders and other resources (which are stored in the  ```./res``` folder), the program requires the current working directory to be the project root folder. A launch configuration file for Visual Studio (```./.vs/launch.vs.json```) that takes care of this is included, just select ```dynamol``` as a startup item in the toolbar. When running from the command line, make sure that you are in the project root folder and execute
+
+```
+./bin/dynamol
+```
 
 ## Usage
 
