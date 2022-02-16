@@ -1,30 +1,24 @@
 file(GLOB_RECURSE dynamol_sources *.cpp *.h)
-file(GLOB imgui_sources ${CMAKE_SOURCE_DIR}/lib/imgui/*.cpp ${CMAKE_SOURCE_DIR}/lib/imgui/*.h)
-file(GLOB tinyfd_sources ${CMAKE_SOURCE_DIR}/lib/tinyfd/tinyfiledialogs.c ${CMAKE_SOURCE_DIR}/lib/tinyfd/tinyfiledialogs.h)
-file(GLOB stb_sources ${CMAKE_SOURCE_DIR}/lib/stb/*.c ${CMAKE_SOURCE_DIR}/lib/stb/*.h)
-
-add_executable(dynamol ${dynamol_sources} ${imgui_sources} ${tinyfd_sources} ${stb_sources})
-
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/lib/glm)
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/lib/glbinding)
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/lib/globjects)
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/lib/glfw)
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/lib/tinyfd)
-
-set(glm_DIR ${CMAKE_SOURCE_DIR}/lib/glm/cmake/glm) 
-
-find_package(glbinding REQUIRED)
-find_package(globjects REQUIRED)
-find_package(glfw3 REQUIRED)
-
-include_directories(${CMAKE_SOURCE_DIR}/lib/imgui/)
-include_directories(${CMAKE_SOURCE_DIR}/lib/tinyfd/)
-include_directories(${CMAKE_SOURCE_DIR}/lib/stb/)
-include_directories(${CMAKE_SOURCE_DIR}/lib/glm/)
-
-target_link_libraries(dynamol PUBLIC glfw)
-target_link_libraries(dynamol PUBLIC glbinding::glbinding )
-target_link_libraries(dynamol PUBLIC glbinding::glbinding-aux )
-target_link_libraries(dynamol PUBLIC globjects::globjects)
-
+add_executable(dynamol ${dynamol_sources})
 set_target_properties(dynamol PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+find_package(glm CONFIG REQUIRED)
+target_link_libraries(dynamol PRIVATE glm::glm)
+
+find_package(glfw3 CONFIG REQUIRED)
+target_link_libraries(dynamol PRIVATE glfw)
+
+find_package(glbinding CONFIG REQUIRED)
+target_link_libraries(dynamol PRIVATE glbinding::glbinding glbinding::glbinding-aux)
+
+find_package(globjects CONFIG REQUIRED)
+target_link_libraries(dynamol PRIVATE globjects::globjects)
+
+find_package(imgui CONFIG REQUIRED)
+target_link_libraries(dynamol PRIVATE imgui::imgui)
+
+find_package(tinyfiledialogs CONFIG REQUIRED)
+target_link_libraries(dynamol PRIVATE tinyfiledialogs::tinyfiledialogs)
+
+find_path(STB_INCLUDE_DIRS "stb.h")
+target_include_directories(dynamol PRIVATE ${STB_INCLUDE_DIRS})

@@ -11,7 +11,7 @@ We provide the full source code of the method that was used to generate the resu
 
 ## Getting Started
 
-DynaMol was developed under Windows using Microsoft Visual Studio 2019. It uses [CMake](https://cmake.org/) as its build system and does not contain anything else platform-specific, so it should in principle work using other compilers and operating systems, but this has not been tested. Should there be any issues, we are grateful for any input that helps us make the software work on as many platforms as possible.
+DynaMol was developed under Windows using Microsoft Visual Studio 2022. It uses [CMake](https://cmake.org/) as its build system and does not contain anything else platform-specific, so it should in principle work using other compilers and operating systems, but this has not been tested. Should there be any issues, we are grateful for any input that helps us make the software work on as many platforms as possible.
 
 The easiest way to get started is to use our release package which, in addition to the source code, contains all prebuilt dependencies and binaries for Windows and Visual Studio 2019 (64-Bit). It is available here:
 
@@ -29,36 +29,11 @@ The project uses [CMake](https://cmake.org/) and relies on the following librari
 - [stb](https://github.com/nothings/stb) 2.26 or higher (https://github.com/nothings/stb.git) for PNG loading and saving
 - [tinyfiledialogs](https://sourceforge.net/projects/tinyfiledialogs/) 3.3.9 or higher (https://git.code.sf.net/p/tinyfiledialogs/code) for dialog functionality
 
-The release package includes all these libraries in compiled form (where applicable), so if you are using it you can skip the remainder of the section. If you want or need to compile the dependencies yourself, on Windows we provide a set of batch scripts to simplify the process of retrieving and building them. These scripts require that the Git and CMake executables properly set up and in your system path.
-
-- ```./fetch-libs.cmd``` retrieves the libraries from their respective git repositories.  
-- ```./build-libs.cmd``` builds them and installs them into the ```./lib``` folder.  
-- ```./copy-libs.cmd``` copies DLLs required for execution into the ```./bin/Debug``` and ```./bin/Release``` folders. 
-
-Under Windows, after opening a command prompt and running these three scripts from the project root folder, all dependencies should be available in the ```./lib``` folder.
-
-```
-./fetch-libs.cmd
-./build-libs.cmd
-./copy-libs.cmd
-```
-
-On other platforms, as glm, Dear ImGui, stb, and tinyfiledialogs do not use CMake, place them as subfolders of the ```./lib``` folder (using the folder names  ```glm```, ```imgui```, ```stb```, and ```tinyfd```):
-
-```
-cd lib
-git clone https://github.com/g-truc/glm.git
-git clone https://github.com/ocornut/imgui.git  
-git clone http://git.code.sf.net/p/tinyfiledialogs/code tinyfd
-git clone https://github.com/nothings/stb.git
-cd ..
-```
-
-The other libraries use CMake, so just follow their respective instructions and make sure that your CMake installation can find them.
+The project uses vcpkg(https://vcpkg.io) for dependency management, so this should take care of everything.
 
 ## Building
 
-If you are using Visual Studio 2019, you can use its integrated CMake support to build and run the project. When running the program from within the IDE, make sure to set the current working directory to the project root folder, otherwise the executable will not be able to find all necessary resources. This can be achieved by editing the debug and lauch settings for dynamol.exe (see the ```./.vs/launch.vs.json file```) and addting the entry  ```"currentDir": "${projectDir}" ```.
+If you are using Visual Studio, you can use its integrated CMake support to build and run the project.
 
 When instead building from the command line, run the following commands from the project root folder:
 
@@ -84,7 +59,7 @@ After building, the executables will be available in the ```./bin``` folder.
 
 ## Running
 
-As mentioned above, the program requires that the current working directory is set to the project root folder. On Windows, the program further assumes that the DLLs for glfw, glbinding, and globjects are located in the same folder as the executable (or, alternatively, are in the system path). If you followed the steps above, this should already be the case. Otherwise, you can run the copy-libs.cmd script to copy them over from the ```./lib``` folder. When running the program from outside the IDE, you can use the ```./dynamol-debug.cmd``` and ```./dynamol-release.cmd``` scripts in the project root folder to run the software.
+As mentioned above, the program requires that the current working directory is set to the project root folder.
 
 ## Usage
 
