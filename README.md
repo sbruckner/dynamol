@@ -25,7 +25,7 @@ The project uses [CMake](https://cmake.org/) and relies on the following librari
 - [stb](https://github.com/nothings/stb) 2.26 or higher (https://github.com/nothings/stb.git) for PNG loading and saving
 - [tinyfiledialogs](https://sourceforge.net/projects/tinyfiledialogs/) 3.3.9 or higher (https://git.code.sf.net/p/tinyfiledialogs/code) for dialog functionality
 
-The project uses vcpkg (https://vcpkg.io) for dependency management, so this should take care of everything. There is a manifest file callsed ```vcpkg.json``` in the project root. When building with CMake for the first time, all dependencies should be installed automatically.
+The project uses vcpkg (https://vcpkg.io) for dependency management, so this should take care of everything. There is a manifest file called ```vcpkg.json``` in the project root folder. When building with CMake for the first time, all dependencies should be downloaded and installed automatically.
 
 ## Building
 
