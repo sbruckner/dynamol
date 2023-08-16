@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 #include <array>
+#include <string>
 
 namespace dynamol
 {

@@ -497,7 +497,7 @@ void SphereRenderer::display()
 		{
 			if (ImGui::CollapsingHeader("Environment Mapping"))
 			{
-				if (ImGui::ListBoxHeader("Environment Map"))
+				if (ImGui::BeginListBox("Environment Map"))
 				{
 					for (uint i = 0; i < m_environmentTextures.size(); i++)
 					{
@@ -515,7 +515,7 @@ void SphereRenderer::display()
 						ImGui::EndGroup();
 					}
 
-					ImGui::ListBoxFooter();
+					ImGui::EndListBox();
 				}
 
 				ImGui::Checkbox("Use for Illumination", &environmentLighting);
@@ -527,7 +527,7 @@ void SphereRenderer::display()
 		{
 			if (ImGui::CollapsingHeader("Material Mapping"))
 			{
-				if (ImGui::ListBoxHeader("Material Map"))
+				if (ImGui::BeginListBox("Material Map"))
 				{
 					for (uint i = 0; i < m_materialTextures.size(); i++)
 					{
@@ -545,7 +545,7 @@ void SphereRenderer::display()
 						ImGui::EndGroup();
 					}
 
-					ImGui::ListBoxFooter();
+					ImGui::EndListBox();
 				}
 			}
 		}
@@ -555,7 +555,7 @@ void SphereRenderer::display()
 		{
 			if (ImGui::CollapsingHeader("Normal Mapping"))
 			{
-				if (ImGui::ListBoxHeader("Normal Map"))
+				if (ImGui::BeginListBox("Normal Map"))
 				{
 					for (uint i = 0; i < m_bumpTextures.size(); i++)
 					{
@@ -573,7 +573,7 @@ void SphereRenderer::display()
 						ImGui::EndGroup();
 					}
 
-					ImGui::ListBoxFooter();
+					ImGui::EndListBox();
 				}
 			}
 		}

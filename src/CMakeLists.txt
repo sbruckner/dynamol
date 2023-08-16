@@ -20,5 +20,5 @@ target_link_libraries(dynamol PRIVATE imgui::imgui)
 find_package(tinyfiledialogs CONFIG REQUIRED)
 target_link_libraries(dynamol PRIVATE tinyfiledialogs::tinyfiledialogs)
 
-find_path(STB_INCLUDE_DIRS "stb.h")
-target_include_directories(dynamol PRIVATE ${STB_INCLUDE_DIRS})
+find_package(Stb REQUIRED)
+target_include_directories(dynamol PRIVATE ${Stb_INCLUDE_DIR})
