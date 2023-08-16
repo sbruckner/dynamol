@@ -81,12 +81,16 @@ SphereRenderer::SphereRenderer(Viewer* viewer) : Renderer(viewer)
 		m_vertices.push_back(Buffer::create());
 		m_vertices.back()->setStorage(i, gl::GL_NONE_BIT);
 	}
-
+	
 	m_elementColorsRadii->setStorage(viewer->scene()->protein()->activeElementColorsRadiiPacked(), gl::GL_NONE_BIT);
 	m_residueColors->setStorage(viewer->scene()->protein()->activeResidueColorsPacked(), gl::GL_NONE_BIT);
 	m_chainColors->setStorage(viewer->scene()->protein()->activeChainColorsPacked(), gl::GL_NONE_BIT);
 
-	m_intersectionBuffer->setStorage(sizeof(vec3) * 1024 * 1024 * 128 + sizeof(uint), nullptr, gl::GL_NONE_BIT);
+	//m_intersectionBuffer->setStorage(sizeof(vec3) * 1024 * 1024 * 128 + sizeof(uint), nullptr, gl::GL_NONE_BIT);
+
+	int maximumSize;
+	glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &maximumSize);
+	m_intersectionBuffer->setStorage(maximumSize, nullptr, gl::GL_NONE_BIT);
 
 	m_verticesQuad->setStorage(std::array<vec3, 1>({ vec3(0.0f, 0.0f, 0.0f) }), gl::GL_NONE_BIT);
 	auto vertexBindingQuad = m_vaoQuad->binding(0);
@@ -713,9 +717,10 @@ void SphereRenderer::display()
 
 	glDisable(GL_BLEND);
 	glBlendEquation(GL_FUNC_ADD);
+	*/
 
 	glViewport(0, 0, viewportSize.x, viewportSize.y);
-	*/
+
 	//////////////////////////////////////////////////////////////////////////
 	// Sphere rendering pass
 	//////////////////////////////////////////////////////////////////////////
@@ -1118,7 +1123,6 @@ void SphereRenderer::display()
 
 		m_depthTexture->unbindActive(1);
 		m_colorTexture->unbindActive(0);
-
 	}
 
 	// Restore OpenGL state

@@ -44,6 +44,8 @@ namespace dynamol
 		glm::mat4 modelLightTransform() const;
 		glm::mat4 modelLightProjectionTransform() const;
 
+		float highDPIscaleFactor() const;
+
 		void saveImage(const std::string & filename);
 
 	private:
@@ -73,6 +75,7 @@ namespace dynamol
 
 		bool m_showUi = true;
 		bool m_saveScreenshot = false;
+		float m_highDPIscaleFactor = 1.0f;
 	};
 
 

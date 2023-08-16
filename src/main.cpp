@@ -46,6 +46,8 @@ int main(int argc, char *argv[])
 	glfwSetErrorCallback(error_callback);
 
 	glfwDefaultWindowHints();
+	glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
+	glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, true);

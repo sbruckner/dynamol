@@ -22,6 +22,7 @@
 #include <sstream>
 #include <list>
 
+
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
@@ -37,6 +38,18 @@ using namespace globjects;
 
 Viewer::Viewer(GLFWwindow *window, Scene *scene) : m_window(window), m_scene(scene)
 {
+#ifdef _WIN32
+	// if it's a HighDPI monitor, try to scale everything
+	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+	float xscale, yscale;
+	glfwGetMonitorContentScale(monitor, &xscale, &yscale);
+	if (xscale > 1 || yscale > 1)
+	{
+		m_highDPIscaleFactor = xscale;
+	}
+#endif
+
+	
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
 
@@ -45,11 +58,15 @@ Viewer::Viewer(GLFWwindow *window, Scene *scene) : m_window(window), m_scene(sce
 	glfwSetKeyCallback(window, &Viewer::keyCallback);
 	glfwSetMouseButtonCallback(window, &Viewer::mouseButtonCallback);
 	glfwSetCursorPosCallback(window, &Viewer::cursorPosCallback);
-	glfwSetScrollCallback(window, &Viewer::scrollCallback);
+	glfwSetScrollCallback(window, &Viewer::scrollCallback);	
 
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init();
-	io.Fonts->AddFontFromFileTTF("./res/ui/Lato-Semibold.ttf", 18);
+
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.ScaleAllSizes(m_highDPIscaleFactor);
+
+	io.Fonts->AddFontFromFileTTF("./res/ui/Lato-Semibold.ttf", 18.0f * m_highDPIscaleFactor);
 
 	m_interactors.emplace_back(std::make_unique<CameraInteractor>(this));
 	m_renderers.emplace_back(std::make_unique<SphereRenderer>(this));
@@ -64,6 +81,9 @@ Viewer::Viewer(GLFWwindow *window, Scene *scene) : m_window(window), m_scene(sce
 		globjects::debug() << "  " << i << " - " << typeid(*r.get()).name();
 		++i;
 	}
+
+
+
 }
 
 void Viewer::display()
@@ -177,6 +197,11 @@ mat4 Viewer::modelLightTransform() const
 mat4 Viewer::modelLightProjectionTransform() const
 {
 	return projectionTransform()*modelLightTransform();
+}
+
+float Viewer::highDPIscaleFactor() const
+{
+	return m_highDPIscaleFactor;
 }
 
 void Viewer::saveImage(const std::string & filename)
@@ -350,8 +375,8 @@ void Viewer::endFrame()
 	std::string s = stream.str();
 
 	//		ImGui::Begin("Information");
-	ImGui::SameLine(ImGui::GetWindowWidth() - 220.0f);
-	ImGui::PlotLines(s.c_str(), framerates, int(frameratesList.size()), 0, 0, 0.0f, 200.0f,ImVec2(128.0f,0.0f));
+	ImGui::SameLine(ImGui::GetWindowWidth() - 220.0f* m_highDPIscaleFactor);
+	ImGui::PlotLines(s.c_str(), framerates, int(frameratesList.size()), 0, 0, 0.0f, 200.0f,ImVec2(128.0f * m_highDPIscaleFactor,0.0f));
 	//		ImGui::End();
 
 	ImGui::EndMainMenuBar();
@@ -437,6 +462,15 @@ void Viewer::mainMenu()
 
 			if (ImGui::MenuItem("1920 x 1080"))
 				glfwSetWindowSize(m_window, 1920, 1080);
+
+			if (ImGui::MenuItem("2048 x 1080"))
+				glfwSetWindowSize(m_window, 2048, 1080);
+
+			if (ImGui::MenuItem("2560 x 1440"))
+				glfwSetWindowSize(m_window, 2560, 1440);
+
+			if (ImGui::MenuItem("3840 x 2160"))
+				glfwSetWindowSize(m_window, 3840, 2160);
 
 			ImGui::EndMenu();
 		}
