@@ -76,6 +76,7 @@ BoundingBoxRenderer::BoundingBoxRenderer(Viewer* viewer) : Renderer(viewer)
 void BoundingBoxRenderer::display()
 {
 	auto currentState = State::currentState();
+	glViewport(viewer()->viewportOrigin().x, viewer()->viewportOrigin().y, viewer()->viewportSize().x, viewer()->viewportSize().y);
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);

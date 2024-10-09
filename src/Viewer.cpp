@@ -96,11 +96,38 @@ void Viewer::display()
 	glViewport(0, 0, viewportSize().x, viewportSize().y);
 
 
-	for (auto& r : m_renderers)
+	if (m_stereoEnabled)
 	{
-		if (r->isEnabled())
-		{		
-			r->display();
+		m_currentEye = 1;
+
+		for (auto& r : m_renderers)
+		{
+			if (r->isEnabled())
+			{
+				r->display();
+			}
+		}
+
+		m_currentEye = 2;
+
+		for (auto& r : m_renderers)
+		{
+			if (r->isEnabled())
+			{
+				r->display();
+			}
+		}
+
+		m_currentEye = 0;
+	}
+	else
+	{
+		for (auto& r : m_renderers)
+		{
+			if (r->isEnabled())
+			{
+				r->display();
+			}
 		}
 	}
 	
@@ -126,7 +153,24 @@ ivec2 Viewer::viewportSize() const
 {
 	int width, height;
 	glfwGetFramebufferSize(m_window, &width, &height);
-	return ivec2(width,height);
+
+	if (m_currentEye == 1)
+		return glm::ivec2(width/2, height);
+	else if (m_currentEye == 2)
+		return glm::ivec2(width/2, height);
+	else
+		return ivec2(width,height);
+}
+
+ivec2 Viewer::viewportOrigin() const
+{
+	if (m_currentEye == 1)
+		return glm::ivec2(0, 0);
+	else if (m_currentEye == 2)
+		return glm::ivec2(viewportSize().y, 0);
+	else
+		return glm::ivec2(0, 0);
+
 }
 
 glm::vec3 Viewer::backgroundColor() const
@@ -141,7 +185,12 @@ mat4 Viewer::modelTransform() const
 
 mat4 Viewer::viewTransform() const
 {
-	return m_viewTransform;
+	if (m_currentEye == 1)
+		return glm::translate(glm::mat4(1.0), glm::vec3(m_interocularDistance*0.5f, 0.0f, 0.0f)) * m_viewTransform;
+	else if (m_currentEye == 2)
+		return glm::translate(glm::mat4(1.0), glm::vec3(-m_interocularDistance*0.5f, 0.0f, 0.0f)) * m_viewTransform;
+	else
+		return m_viewTransform;
 }
 
 void Viewer::setModelTransform(const glm::mat4& m)
@@ -171,7 +220,12 @@ void Viewer::setLightTransform(const glm::mat4& m)
 
 mat4 Viewer::projectionTransform() const
 {
-	return m_projectionTransform;
+	if (m_currentEye == 1)
+		return glm::translate(glm::mat4(1.0), glm::vec3(m_projectionCenterOffset, 0.0f, 0.0f)) * m_projectionTransform;
+	else if (m_currentEye == 2)
+		return glm::translate(glm::mat4(1.0), glm::vec3(-m_projectionCenterOffset,0.0f,0.0f)) * m_projectionTransform;
+	else
+		return m_projectionTransform;
 }
 
 mat4 Viewer::lightTransform() const
@@ -445,6 +499,28 @@ void Viewer::mainMenu()
 
 		if (ImGui::BeginMenu("Viewport"))
 		{
+			if (ImGui::MenuItem("Fullscreen"))
+			{
+				static bool fullScreen = false;
+				static int xpos = 0, ypos = 0;
+				static int width = 512, height = 512;
+
+				if (!fullScreen)
+				{
+					glfwGetWindowPos(m_window, &xpos, &ypos);
+					glfwGetWindowSize(m_window, &width, &height);
+					GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+					const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+					glfwSetWindowMonitor(m_window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+					fullScreen = true;
+				}
+				else
+				{
+					glfwSetWindowMonitor(m_window, nullptr, xpos, ypos, width, height, 0);
+					fullScreen = false;
+				}
+			}
+
 			if (ImGui::MenuItem("512 x 512"))
 				glfwSetWindowSize(m_window, 512, 512);
 
@@ -475,6 +551,14 @@ void Viewer::mainMenu()
 			ImGui::EndMenu();
 		}
 
+		if (ImGui::BeginMenu("Stereo"))
+		{
+			ImGui::Checkbox("Enabled", &m_stereoEnabled);
+			ImGui::SliderFloat("Interocular Distance", &m_interocularDistance, 0.0f, 1.0f);
+			ImGui::SliderFloat("Projection Center Offset", &m_projectionCenterOffset, 0.0f, 1.0f);
+
+			ImGui::EndMenu();
+		}
 		ImGui::EndMenu();
 	}
 }

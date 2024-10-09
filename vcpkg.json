@@ -1,18 +1,21 @@
- {
+{
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
   "name": "dynamol",
   "version": "0.1.2",
   "dependencies": [
-    "glm",
-    "glfw3",
     "glbinding",
-    "globjects",    
-    "tinyfiledialogs",
-    "stb", 
+    "glfw3",
+    "glm",
+    "globjects",
     {
-      "name":"imgui",
+      "name": "imgui",
       "default-features": false,
-      "features": ["glfw-binding","opengl3-binding"]
-    }
+      "features": [
+        "glfw-binding",
+        "opengl3-binding"
+      ]
+    },
+    "stb",
+    "tinyfiledialogs"
   ]
 }

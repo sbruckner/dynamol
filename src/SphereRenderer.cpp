@@ -1098,18 +1098,18 @@ void SphereRenderer::display()
 		m_sphereDiffuseTexture->unbindActive(0);
 		m_shadeFramebuffer->unbind();
 	}
-
+/*
 	if (viewportSize == viewer()->viewportSize())
 	{
 		// Blit final image into visible framebuffer
-		m_shadeFramebuffer->blit(GL_COLOR_ATTACHMENT0, { 0,0,viewer()->viewportSize().x, viewer()->viewportSize().y }, Framebuffer::defaultFBO().get(), GL_BACK, { 0,0,viewer()->viewportSize().x, viewer()->viewportSize().y }, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+		m_shadeFramebuffer->blit(GL_COLOR_ATTACHMENT0, { viewer()->viewportOrigin().x, viewer()->viewportOrigin().y, viewer()->viewportSize().x, viewer()->viewportSize().y }, Framebuffer::defaultFBO().get(), GL_BACK, { 0,0,viewer()->viewportSize().x, viewer()->viewportSize().y }, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 	}
-	else
+	else*/
 	{
 		m_colorTexture->bindActive(0);
 		m_depthTexture->bindActive(1);
 
-		glViewport(0, 0, viewer()->viewportSize().x, viewer()->viewportSize().y);
+		glViewport(viewer()->viewportOrigin().x, viewer()->viewportOrigin().y, viewer()->viewportSize().x, viewer()->viewportSize().y);
 		glDepthMask(GL_TRUE);
 
 		programDisplay->setUniform("colorTexture", 0);

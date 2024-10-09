@@ -25,6 +25,7 @@ namespace dynamol
 		Scene* scene();
 
 		glm::ivec2 viewportSize() const;
+		glm::ivec2 viewportOrigin() const;
 
 		glm::vec3 backgroundColor() const;
 		glm::mat4 modelTransform() const;
@@ -76,6 +77,10 @@ namespace dynamol
 		bool m_showUi = true;
 		bool m_saveScreenshot = false;
 		float m_highDPIscaleFactor = 1.0f;
+		bool m_stereoEnabled = false;
+		int m_currentEye = 0;
+		float m_interocularDistance = 0.3;
+		float m_projectionCenterOffset = 0.075f;
 	};
 
 
